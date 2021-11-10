@@ -23,12 +23,12 @@ end
 [M,~] = max(cellfun(@length, interactions(:,3)));
 Padded = cellfun(@(x) [x zeros(1, M - numel(x))], ...
                  interactions(:,3), 'un', 0);
-W = cell2mat(Padded);
+W = cat(1,Padded{:});
 
 
 parfor i=2:tree.binCount
    [X, ~] = find(W==i);
-   interactions{i,4}= X;
+   interactions{i,4}= X';
 end
 
 end
@@ -58,7 +58,7 @@ end
 parentIndex = tree.binParents(index);
 parentNeigbours = find(nodeintersection(tree,parentIndex,(1:tree.binCount)') & (nodeLevel-1 >= tree.binLevel)');
 
-parentNeigbours = setdiff(parentNeigbours, tree.binParents(parentNeigbours));
+parentNeigbours = setdiff(parentNeigbours, [tree.binParents(parentNeigbours) parentIndex]);
 
 parentNeigboursChildren = getchildren(tree,parentNeigbours);
 parentNeigboursChildren = parentNeigboursChildren(isleaf(tree,parentNeigboursChildren));

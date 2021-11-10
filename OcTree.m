@@ -23,7 +23,8 @@ classdef OcTree < handle
             parse(IP,varargin{:});
             this.arguments = IP.Results;
             
-            this.binCorners = [min(pts,[],1) max(pts,[],1)];
+            this.binCorners = [min(pts,[],'all')*ones(1,3)...
+                               max(pts,[],'all')*ones(1,3)];
             this.points = pts;
             this.pointIndex = ones(numPts,1);
             this.binLevel = 0;
