@@ -8,7 +8,7 @@ function [children] = getchildren(tree, indices)
 %   children : returns a column array off all children below given nodes
 
 nonLeafIndices = indices(~isleaf(tree,indices));
-newChildren = tree.binChildren(nonLeafIndices,:);
+newChildren = tree.nodeChildren(nonLeafIndices,:);
 newChildren = reshape(newChildren,[],1);
 if size(newChildren,1) ~= 0
     children = [indices(isleaf(tree,indices)); newChildren ; getchildren(tree,newChildren)];

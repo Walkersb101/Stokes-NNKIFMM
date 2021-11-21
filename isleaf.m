@@ -8,7 +8,7 @@ function [isLeaf] = isleaf(tree, index)
 %   isLeaf : (1,n) or (n,1) Logical array determining if node is a leaf
 %            node
 
-children = tree.binChildren(index,:);
+children = tree.nodeChildren(index,:);
 isLeaf = (children(:,1) == 0);
 end
 

@@ -1,12 +1,15 @@
 clear all;
 
-esp = 0.001;
+epsilon = 0.001;
 mu = 1;
 
-particlenumber = 2000;
+% points = rand(400,3)*0.5;
+% points =  [points; 1 1 1];
+% 
+% pointpot = rand(401,3);
 
-points = rand(particlenumber,3);
-pointpot = rand(particlenumber,3);
+points = rand(2000,3);
+pointpot = rand(2000,3);
 
 tic
 
@@ -20,15 +23,14 @@ blocks = [1:3*Row_block:3*N (3*N)+1];
 
 nystromvel = zeros(3*N,1);
 for i = 1:length(blocks)-1
-    nystromvel(blocks(i):blocks(i+1)-1,:) = s(pointsreshape,pointsreshape(blocks(i):blocks(i+1)-1,:),esp,mu)*pointpotreshape;
+    nystromvel(blocks(i):blocks(i+1)-1,:) = s(pointsreshape,pointsreshape(blocks(i):blocks(i+1)-1,:),epsilon,mu)*pointpotreshape;
 end
 nystromvel = reshape(nystromvel,3,[])';
 toc
 
 
-
 tic
-tree = OcTree(points,'binCapacity',200,'maxDepth',21);
+tree = OcTree(points,pointpot'binCapacity',200,'maxDepth',21);
 
 points = [];
 
@@ -57,9 +59,9 @@ for i = 1:size(postorderleaves,2)
     leafipot = pointpot(leafislice,:);
     leafipot = reshape(leafipot.',[],1);
     
-    vel = s(leafipoints,upsurf,esp,mu) * leafipot;
+    vel = s(leafipoints,upsurf,epsilon,mu) * leafipot;
     
-    pot = s(upsurf,upsurf,esp,mu) \ vel;
+    pot = s(upsurf,upsurf,epsilon,mu) \ vel;
     uppot{leafi} = pot;
 end
 
@@ -67,7 +69,7 @@ for i = 1:size(postordernonleaves,2)
     
     nonleafi = postordernonleaves(i);
     
-    upsurf = genupsurf(tree,leafi,6,2);
+    upsurf = genupsurf(tree,nonleafi,6,2);
     upsurf = reshape(upsurf.',[],1);
     
     children = tree.binChildren(nonleafi,:);
@@ -76,12 +78,12 @@ for i = 1:size(postordernonleaves,2)
     childrenupsurf = [];
     for j = 1:8
         childrenupsurf = [childrenupsurf ; ...
-                          reshape(genupsurf(tree,nonleafi,6,2).',[],1)];
+                          reshape(genupsurf(tree,children(j),6,2).',[],1)];
     end
     
-    RHS = s(childrenupsurf,upsurf,esp,mu)*childrenuppot;
+    RHS = s(childrenupsurf,upsurf,epsilon,mu)*childrenuppot;
     
-    pot = s(upsurf,upsurf,esp,mu) \ RHS;
+    pot = s(upsurf,upsurf,epsilon,mu) \ RHS;
     
     uppot{nonleafi} = pot;
 end
@@ -89,17 +91,17 @@ toc
 
 downpot = cell(tree.binCount,1);
 
-upsurf = genupsurf(tree,1,6,2);
-upsurf = reshape(upsurf.',[],1);
-
-pot = uppot{1};
-
-downsurf = gendownsurf(tree,1,6,2);
-downsurf = reshape(downsurf.',[],1);
-
-RHS = s(upsurf,downsurf,esp,mu)*pot;
-
-downpot{1} = s(downsurf,downsurf,esp,mu) \ RHS;
+% upsurf = genupsurf(tree,1,6,2);
+% upsurf = reshape(upsurf.',[],1);
+% 
+% pot = uppot{1};
+% 
+% downsurf = gendownsurf(tree,1,6,2);
+% downsurf = reshape(downsurf.',[],1);
+% 
+% RHS = s(upsurf,downsurf,epsilon,mu)*pot;
+% 
+% downpot{1} = s(downsurf,downsurf,epsilon,mu) \ RHS;
 
 preorder = preordertree(tree,1);
 preorderleaves = preorder(isleaf(tree,preorder));
@@ -113,11 +115,10 @@ for i = 2:size(preorder,2)
     downsurf = gendownsurf(tree,nonrooti,6,2);
     downsurf = reshape(downsurf.',[],1);
     
-    RHS = zeros(size(downsurf,2),1);
+    RHS = zeros(size(downsurf));
     
     v = interactions{nonrooti,2};
     x = interactions{nonrooti,4};
-    
     
     if ~isempty(v)
         parfor vi = 1:size(v,2)
@@ -125,7 +126,7 @@ for i = 2:size(preorder,2)
             surf = genupsurf(tree,vnode,6,2);
             surf = reshape(surf.',[],1);
             pot = uppot{vi};
-            RHS = RHS + s(surf,downsurf,esp,mu) * pot;
+            RHS = RHS + s(surf,downsurf,epsilon,mu) * pot;
         end
     end
     
@@ -140,19 +141,22 @@ for i = 2:size(preorder,2)
             xipointpot = pointpot(xislice,:);
             xipointpot = reshape(xipointpot.',[],1);
             
-            RHS = RHS + s(xipoints,downsurf,esp,mu) * xipointpot;
+            RHS = RHS + s(xipoints,downsurf,epsilon,mu) * xipointpot;
             
         end
     end
     
     pnode = tree.binParents(nonrooti);
-    surf = gendownsurf(tree,pnode,6,2);
-    surf = reshape(surf.',[],1);
-    pot = downpot{pnode};
+    if pnode ~=1
+        psurf = gendownsurf(tree,pnode,6,2);
+        psurf = reshape(psurf.',[],1);
+        ppot = downpot{pnode};
     
-    RHS = RHS + s(surf,downsurf,esp,mu) * pot;
+        RHS = RHS + s(psurf,downsurf,epsilon,mu) * ppot;
+    end
     
-    pot = s(downsurf,downsurf,esp,mu) \ RHS;
+
+    pot = s(downsurf,downsurf,epsilon,mu) \ RHS;
     
     downpot{nonrooti} = pot;
 end
@@ -172,7 +176,9 @@ for i = 1:size(preorderleaves,2)
     
     pot = downpot{leafi};
     
-    pointvel = s(downsurf,leafipoints,esp,mu) * pot;
+    pointvel = zeros(size(leafipoints));
+    pointvel = s(downsurf,leafipoints,epsilon,mu) * pot;
+
     
     u = interactions{leafi,1};
     w = interactions{leafi,3};
@@ -188,7 +194,7 @@ for i = 1:size(preorderleaves,2)
             uipointpot = pointpot(uislice,:);
             uipointpot = reshape(uipointpot.',[],1);
             
-            pointvel = pointvel + s(uipoints,leafipoints,esp,mu) * uipointpot;
+            pointvel = pointvel + s(uipoints,leafipoints,epsilon,mu) * uipointpot;
         end
     end
     
@@ -201,7 +207,7 @@ for i = 1:size(preorderleaves,2)
             
             pot = uppot{wnode};
             
-            pointvel = pointvel + s(upsurf,leafipoints,esp,mu) * pot;
+            pointvel = pointvel + s(upsurf,leafipoints,epsilon,mu) * pot;
         end
     end
     
@@ -209,4 +215,6 @@ for i = 1:size(preorderleaves,2)
 end
 toc
 
+
+diff = nystromvel-vel;
 norm(nystromvel-vel,'fro')/norm(nystromvel,'fro')

@@ -1,7 +1,7 @@
 function plotcube(coords, varargin)
 % plotcube  Plot cubes on the current plot
 % plots cubes on the current plot based on the coords given
-%Inputs:
+% Inputs:
 %   coords   : a (n,6) matrix where [x1 y1 z1 x2 y2 z2] are the corners of
 %              the cube. [x1 y1 z1] denotes the lower left corner 
 %              and [x2 y2 z2] denotes the upper right corner.

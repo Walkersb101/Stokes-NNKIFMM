@@ -11,8 +11,8 @@ function [intersection] = nodeintersection(tree, index1,index2)
 %   intersection : (1,n) or (n,1) Logical array determining if index 2 is 
 %                  next to index 1            
 
-coord1 = tree.binCorners(index1,:);
-coord2 = tree.binCorners(index2,:);
+coord1 = tree.nodeCorners(index1,:);
+coord2 = tree.nodeCorners(index2,:);
 
 intersection = not(any([coord2(:,1) > coord1(4),...
                         coord2(:,4) < coord1(1),...
