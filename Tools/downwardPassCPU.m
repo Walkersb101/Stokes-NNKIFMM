@@ -29,6 +29,7 @@ levels = max(tree.nodeLevel);
 
 downpot = zeros(tree.nodeCount,coronaPoints*3);
 
+
 for level = 1:1:levels
     nodes = find(tree.nodeLevel==level);
 

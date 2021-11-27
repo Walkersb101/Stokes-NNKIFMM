@@ -14,7 +14,7 @@ points = [Sphere(1,[-10 -10 -10],10);
           Sphere(1,[10 10 10],10)];    
       
      
-potentials = 100*rand(size(points))-50;
+potentials = 10*rand(size(points))-5;
 
 disp(numel(points))
 
@@ -35,9 +35,9 @@ end
 directvel = reshape(directvel,3,[])';
 toc
 
-disp("Nystrom done!")
+disp("direct done!")
 
-tree = OcTree(points,'nodeCapacity',200,'maxDepth',21);
+tree = OcTree(points,points,'nodeCapacity',800,'maxDepth',21);
 
 A = KIFMM(tree,[0.01,1]);
 
