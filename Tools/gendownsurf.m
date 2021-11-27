@@ -13,25 +13,69 @@ function [surf] = gendownsurf(tree, index, resolution, shells)
 %   points     : (n,3) array of points on the outer shell
 
 
-    coords = tree.nodeCorners(index,:);
-    width = coords(4:6)- coords(1:3);
-    nearboundary = [coords(1:3) - width coords(4:6) + width];
-    
-    x = linspace(nearboundary(1),nearboundary(4),resolution);
-    y = linspace(nearboundary(2),nearboundary(5),resolution);
-    z = linspace(nearboundary(3),nearboundary(6),resolution);
+%     coords = tree.nodeCorners(index,:);
+%     width = coords(4:6)- coords(1:3);
+%     nearboundary = [coords(1:3) - width coords(4:6) + width];
+%     
+%     interiorres = resolution-1-2*(shells-1);
+%     spacing = 3*width/interiorres;
+%     coronadepth = (shells-1)*spacing;
+%     
+%     outerboundary = [nearboundary(1:3)-coronadepth, ...
+%                      nearboundary(4:6)+coronadepth];
+%                  
+%     x = linspace(outerboundary(1),outerboundary(4),resolution);
+%     y = linspace(outerboundary(2),outerboundary(5),resolution);
+%     z = linspace(outerboundary(3),outerboundary(6),resolution);
+% 
+%     [X,Y,Z] = meshgrid(x,y,z);
+% 
+%     X(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+%     Y(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+%     Z(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+% 
+%     X=reshape(X(~isnan(X)),[],1);
+%     Y=reshape(Y(~isnan(Y)),[],1);
+%     Z=reshape(Z(~isnan(Z)),[],1);
+% 
+%     surf = [X Y Z];
 
-    [X,Y,Z] = meshgrid(x,y,z);
+coords = tree.nodeCorners(index,:);
+width = coords(4:6)- coords(1:3);
+nearboundary = [coords(1:3) - width coords(4:6) + width];
 
-    X(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
-    Y(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
-    Z(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+domaincoords = tree.nodeCorners(1,:);
+domainwidth = domaincoords(4:6)- domaincoords(1:3);
+maxdepth = max(tree.nodeLevel);
+smallestnode = domainwidth.*(2^(-maxdepth));
 
-    X=reshape(X(~isnan(X)),[],1);
-    Y=reshape(Y(~isnan(Y)),[],1);
-    Z=reshape(Z(~isnan(Z)),[],1);
+farboundary = [nearboundary(1:3)-smallestnode, ...
+               nearboundary(4:6)+smallestnode];
 
-    surf = [X Y Z];
+interres = resolution - 2*(shells-1);
+spacing = smallestnode/(shells-1);
+
+x = [farboundary(1):spacing(1):nearboundary(1)-spacing(1),...
+     linspace(nearboundary(1),nearboundary(4),interres),...
+     farboundary(4):-spacing(1):nearboundary(4)+spacing(1)];
+y = [farboundary(2):spacing(2):nearboundary(2)-spacing(2),...
+     linspace(nearboundary(2),nearboundary(5),interres),...
+     farboundary(5):-spacing(2):nearboundary(5)+spacing(2)];
+z = [farboundary(3):spacing(3):nearboundary(3)-spacing(3),...
+     linspace(nearboundary(3),nearboundary(6),interres),...
+     farboundary(6):-spacing(3):nearboundary(6)+spacing(3)];
+
+[X,Y,Z] = meshgrid(x,y,z);
+
+X(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+Y(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+Z(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+
+X=reshape(X(~isnan(X)),[],1);
+Y=reshape(Y(~isnan(Y)),[],1);
+Z=reshape(Z(~isnan(Z)),[],1);
+
+surf = [X Y Z];
  
 end
 

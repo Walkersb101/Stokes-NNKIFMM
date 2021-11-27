@@ -1,33 +1,29 @@
 function [uppot] = upwardPassCPU(tree,potentials,arguments)
 %UPWARDPASSCPU Compute upwards pass of the KIFMM method on the CPU 
 %   The upwards pass of the KIFMM method is compued onto the upwards
-%   equivent surfaces though the calculation of the potential points onto
-%   the downwards surface, where then the equivilent potentials are 
-%   calculated on the upwards surface. The algorithm then works up
+%   equivent surfaces though the calculation of the potential nodes onto
+%   the downwards check surface, where then the equivilent potentials are 
+%   calculated on the upwards equivent points. The algorithm then works up
 %   the tree calucating the equivent potential based on the equivelent
 %   potentials of its children. 
 % Inputs:
 %   tree       : A tree struture containing potential points
-%   potentials : A (N,3) array of potentials
-%   arguments  : Struture passed from FMM class containing all variables, 
-%                see FMM code for fields
-% Output:
-%   uppot : A (nodeCount,coronaPoints) array containg the equivent upwards
-%           potential
+%   potentials : 
+%   arguments  : 
 
-kernelPar = arguments.kernelPar;
+kernalPar = arguments.kernalPar;
 
 coronaRes = arguments.coronaRes;
 coronaShells = arguments.coronaShells;
-coronaPoints = coronaRes^3 - (coronaRes-2*coronaShells)^3;
+coronapoints = coronaRes^3 - (coronaRes-2*coronaShells)^3;
 
 levels = max(tree.nodeLevel);
-uppot = zeros(tree.nodeCount,coronaPoints*3);
+uppot = zeros(tree.nodeCount,coronapoints*3);
 
 for level = levels:-1:0
     nodes = find(tree.nodeLevel==level);
 
-    uppottemp = zeros(size(nodes,2),coronaPoints*3);
+    uppottemp = zeros(size(nodes,2),coronapoints*3);
 
     parfor (i = 1:size(nodes,2), arguments.parThreads)
         node = nodes(i);
@@ -47,14 +43,14 @@ for level = levels:-1:0
             nodepoints = reshape(nodepoints.',[],1);
             nodepotentials = reshape(nodepotentials.',[],1);
 
-            RHS = blockcomputation(nodepoints,downsurf,nodepotentials,kernelPar);
+            RHS = blockcomputation(nodepoints,downsurf,nodepotentials,kernalPar);
 
         else
 
             children = tree.nodeChildren(node,:);
-            childrensurf = zeros(coronaPoints*8,3);
+            childrensurf = zeros(coronapoints*8,3);
             for j = 1:8
-                childrensurf(((j-1)*coronaPoints)+1:j*coronaPoints,:) = ...
+                childrensurf(((j-1)*coronapoints)+1:j*coronapoints,:) = ...
                     genupsurf(tree,children(j),coronaRes,coronaShells);
             end
             childrensurf = reshape(childrensurf',[],1);
@@ -62,11 +58,11 @@ for level = levels:-1:0
             childrenpot = uppot(children,:);
             childrenpot = reshape(childrenpot',[],1);
 
-            RHS = blockcomputation(childrensurf,downsurf,childrenpot,kernelPar);
+            RHS = blockcomputation(childrensurf,downsurf,childrenpot,kernalParam);
 
         end
 
-        pot = kernel(upsurf,downsurf,kernelPar) \ RHS;
+        pot = kernel(upsurf,downsurf,kernalParam) \ RHS;
 
         uppottemp(i,:) = pot';
     end

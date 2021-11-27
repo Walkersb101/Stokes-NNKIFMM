@@ -9,7 +9,7 @@ classdef FMM
     %   arguement  : See Optional Arguments below
     %
     % Optional Arguments:
-    %   kernelParm   : Paramaters to be passed to the kernel
+    %   kernalParm   : Paramaters to be passed to the kernal
     %   GPU          : Determins if GPU is used (0 for CPU, 1 for GPU)
     %   parThreads   : Number of threads to be used for ParFor (Default=0)
     %   blockSize    : Maximum size of Array in GB (Default = 0.2)
@@ -29,7 +29,7 @@ classdef FMM
     
     properties
         tree;
-        kernelPar
+        kernalPar
         arguments;
     end
     
@@ -38,10 +38,11 @@ classdef FMM
     end
     
     methods
-        function this = FMM(tree,kernelPar,varargin)
-            %FMM Define FMM with variables for kernel and processing
+        function this = FMM(tree,kernalPar,varargin)
+            %FMM Define FMM with variables for kernal and processing
             %   Detailed explanation goes here
             this.tree = tree;
+            this
             IP = inputParser;
             addOptional(IP,'GPU',0);
             addOptional(IP,'parThreads',0);
@@ -51,14 +52,12 @@ classdef FMM
             addOptional(IP,'coronaShells',2);
             parse(IP,varargin{:});
             this.arguments = IP.Results;
-            this.arguments.kernelPar = kernelPar;
         end
         
         function vel = vectorProduct(this, potentials)
             
             if GPU == 0
                 uppot = upwardPassCPU(this.tree,potentials,this.arguments);
-                vel = dow
             else
                 
             end

@@ -19,29 +19,27 @@ potentials = 10*rand(size(points))-5;
 disp(numel(points))
 
 
-tic
-N = size(points,1);
-fine = gpuArray(reshape(points.',[],1));
-pointpotreshape = gpuArray(reshape(potentials.',[],1));
-
-Max_array_size = (0.1 * 8000000000)/64;
-Row_block = floor(Max_array_size/(N*3));
-blocks = [1:3*Row_block:3*N (3*N)+1];
-
-directvel = zeros(3*N,1);
-for i = 1:length(blocks)-1
-    directvel(blocks(i):blocks(i+1)-1,:) = kernel(fine,fine(blocks(i):blocks(i+1)-1,:),[0.01,1])*pointpotreshape;
-end
-directvel = reshape(directvel,3,[])';
-toc
+% tic
+% N = size(points,1);
+% fine = gpuArray(reshape(points.',[],1));
+% pointpotreshape = gpuArray(reshape(potentials.',[],1));
+% 
+% Max_array_size = (0.1 * 8000000000)/64;
+% Row_block = floor(Max_array_size/(N*3));
+% blocks = [1:3*Row_block:3*N (3*N)+1];
+% 
+% nystromvel = zeros(3*N,1);
+% for i = 1:length(blocks)-1
+%     nystromvel(blocks(i):blocks(i+1)-1,:) = s(fine,fine(blocks(i):blocks(i+1)-1,:),epsilon,mu)*pointpotreshape;
+% end
+% nystromvel = reshape(nystromvel,3,[])';
+% toc
 
 disp("Nystrom done!")
 
 tree = OcTree(points,'nodeCapacity',800,'maxDepth',21);
 
-A = FMM(tree,[0.01,1]);
+A = FMM(tree);
 
-fmmvel = A.computeVel(potentials);
+A.getUppot(potentials)
 
-diff = fmmvel - directvel;
-norm(diff,'fro')/norm(directvel,'fro')
