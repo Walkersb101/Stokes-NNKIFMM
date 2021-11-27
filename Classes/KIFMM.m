@@ -1,4 +1,4 @@
-classdef FMM
+classdef KIFMM
     % OCTree Initialsie FMM Method
     %   Generate FMM class to store method parameters, The vector product 
     %   can be computed though the vectorProduct method which uses the
@@ -9,7 +9,7 @@ classdef FMM
     %   arguement  : See Optional Arguments below
     %
     % Optional Arguments:
-    %   kernalParm   : Paramaters to be passed to the kernal
+    %   kernelParm   : Paramaters to be passed to the kernel
     %   GPU          : Determins if GPU is used (0 for CPU, 1 for GPU)
     %   parThreads   : Number of threads to be used for ParFor (Default=0)
     %   blockSize    : Maximum size of Array in GB (Default = 0.2)
@@ -24,12 +24,12 @@ classdef FMM
     %   arguments    : Store compuational arguments, See above
     %
     % Functions:
-    %   vectorProduct : Compute the vector product using the KIFMM method
+    %   computeVel : Compute the vector product using the KIFMM method
 
     
     properties
         tree;
-        kernalPar
+        kernelPar
         arguments;
     end
     
@@ -38,9 +38,9 @@ classdef FMM
     end
     
     methods
-        function this = FMM(tree,kernalPar,varargin)
-            %FMM Define FMM with variables for kernal and processing
-            %   Detailed explanation goes here
+        function this = KIFMM(tree,kernelPar,varargin)
+            %FMM Define FMM with variables for kernel and processing
+            %   Defines variable for KIFMM process
             this.tree = tree;
             IP = inputParser;
             addOptional(IP,'GPU',0);
@@ -51,13 +51,14 @@ classdef FMM
             addOptional(IP,'coronaShells',2);
             parse(IP,varargin{:});
             this.arguments = IP.Results;
-            this.arguments.kernalPar = kernalPar;
+            this.arguments.kernelPar = kernelPar;
         end
         
-        function vel = vectorProduct(this, potentials)
+        function vel = computeVel(this, potentials)
             
-            if GPU == 0
+            if this.arguments.GPU == 0
                 uppot = upwardPassCPU(this.tree,potentials,this.arguments);
+                vel = downwardPassCPU(this.tree,potentials,uppot,this.arguments);
             else
                 
             end
