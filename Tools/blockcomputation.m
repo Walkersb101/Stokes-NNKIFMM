@@ -1,10 +1,10 @@
-function [RHS] = blockcomputation(x,x0,epsilon,mu,potentials)
+function [RHS] = blockcomputation(x,x0,potentials,param)
 %BLOCKCOMPUTATION Summary of this function goes here
 %   Detailed explanation goes here
 
-x = gpuArray(x);
-x0 = gpuArray(x0);
-potentials = gpuArray(potentials);
+% x = gpuArray(x);
+% x0 = gpuArray(x0);
+% potentials = gpuArray(potentials);
 
 N = size(x0,1)/3;
 
@@ -14,8 +14,8 @@ blocks = [1:3*Row_block:3*N (3*N)+1];
 
 RHS = zeros(3*N,1);
 for i = 1:length(blocks)-1
-    RHS(blocks(i):blocks(i+1)-1,:) = s(x,x0(blocks(i):blocks(i+1)-1,:),epsilon,mu)*potentials;
+    RHS(blocks(i):blocks(i+1)-1,:) = kernel(x,x0(blocks(i):blocks(i+1)-1,:),param)*potentials;
 end
-RHS = gather(RHS);
+% RHS = gather(RHS);
 end
 

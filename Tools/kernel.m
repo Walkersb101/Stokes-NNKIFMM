@@ -1,18 +1,19 @@
-function [s] = s(x,x0,epsilon,mu)
+function [s] = kernel(x,x0,param)
 % s  Compute the stokelet matrix with x and x0
 % Compute the a (3*M, 3*N) matrix based on the form of the regualraised
 % stokelet given in https://aip.scitation.org/doi/abs/10.1063/1.1830486
 %Inputs:
-%   x       : a (3*N,1) vector of stokelet points where we have the force
-%             formated as [x1 y1 z1 x2 y2 z2 ...]'
-%   x0      : a (3*M,1) vector of sample points where we want to compute 
-%             the velocity formated as [x1 y1 z1 x2 y2 z2 ...]'
-%   epsilon : scalar regularlisation parameter
-%   mu      : the dynamic viscosity of the fluid
-%
+%   x    : A (3*N,1) vector of stokelet points where we have the force
+%          formated as [x1 y1 z1 x2 y2 z2 ...]'
+%   x0   : A (3*M,1) vector of sample points where we want to compute 
+%          the velocity formated as [x1 y1 z1 x2 y2 z2 ...]'
+%  param : Parameters for kernel
 %
 %Output:
 %   s   : (3*M, 3*N) stoklet matrix 
+
+epsilon = param(1);
+mu = param(2);
 
 % find number of partices in x and x0
 N=length(x)/3;

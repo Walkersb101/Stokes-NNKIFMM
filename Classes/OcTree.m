@@ -245,7 +245,7 @@ classdef OcTree < handle
                 neighbours = find(nodeintersection(this,index,(1:this.nodeCount)') & (indexLevel >= this.nodeLevel)');
                 neighbours = setdiff(neighbours, this.nodeParents(neighbours));
 
-                neighbourChildren = getchildren(this,neighbours);
+                neighbourChildren = getChildren(this,neighbours);
                 neighbourChildren = neighbourChildren(isleaf(this,neighbourChildren));
 
                 W = setdiff(neighbourChildren, U);
