@@ -11,13 +11,16 @@ classdef OcTree < handle
     %   arguement  : See Optional Arguments below
     %
     % Optional Arguments:
-    %   nodeCapacity : sets the maximum capacity of the node, default is 
-    %                  200
-    %   maxDepth    : sets the maximum number of node divsions, defualt is
-    %                 21
+    %   nodeCapacity : sets the maximum capacity of the node(default = 200)
+    %   maxDepth     : sets the maximum number of node divsions
+    %                  (default = 21)
     %
     % Properties:
     %   points       : (N,3) array storing the postion of each point
+    %   potentials   : (N,1) logic array to slice points into potential
+    %                  points
+    %   targets      : (N,1) logic array to slice points into target
+    %                  points
     %   pointIndex   : Store the node index in which the point is in
     %   nodeCorners  : Stores the coorinates of the corners of the node
     %                  [x1 y1 z1 x2 y2 z2] where point 1 is the lower left
@@ -42,6 +45,8 @@ classdef OcTree < handle
     
     properties
         points;
+        potentials;
+        targets;
         pointIndex;
         nodeCorners;
         nodeLevel;
@@ -54,10 +59,14 @@ classdef OcTree < handle
     end
     
     methods
-        function this = OcTree(pts,varargin)
+        function this = OcTree(potPoints,targetPoints,varargin)
             %OcTree Construct an instance of this class
             %   Defines variables for class and initialises the this build
-            numPts = size(pts,1);
+            points = unique([potPoints;targetPoints],'rows','stable');
+            this.potentials = ismember(points,potPoints,'rows');
+            this.targets = ismember(points,targetPoints,'rows');
+            
+            numPts = size(points,1);
             
             IP = inputParser;
             addOptional(IP,'nodeCapacity',200);
@@ -65,9 +74,9 @@ classdef OcTree < handle
             parse(IP,varargin{:});
             this.arguments = IP.Results;
             
-            this.nodeCorners = [min(pts,[],'all')*ones(1,3)...
-                               max(pts,[],'all')*ones(1,3)];
-            this.points = pts;
+            this.nodeCorners = [min(points,[],'all')*ones(1,3)...
+                               max(points,[],'all')*ones(1,3)];
+            this.points = points;
             this.pointIndex = ones(numPts,1);
             this.nodeLevel = 0;
             this.nodeParents(1) = 0;

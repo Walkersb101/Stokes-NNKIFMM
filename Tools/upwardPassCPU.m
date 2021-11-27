@@ -47,7 +47,7 @@ for level = levels:-1:0
 
             nodepoints = reshape(nodepoints.',[],1);
             nodepotentials = reshape(nodepotentials.',[],1);
-
+            
             RHS = blockcomputation(nodepoints,downsurf,nodepotentials,blockSize,kernelPar);
 
         else
