@@ -14,7 +14,7 @@ points = [Sphere(1,[-10 -10 -10],10);
           Sphere(1,[10 10 10],10)];    
       
      
-potentials = 10*rand(size(points))-5;
+potentials = 100*rand(size(points))-50;
 
 disp(numel(points))
 
@@ -37,7 +37,7 @@ toc
 
 disp("Nystrom done!")
 
-tree = OcTree(points,'nodeCapacity',800,'maxDepth',21);
+tree = OcTree(points,'nodeCapacity',200,'maxDepth',21);
 
 A = KIFMM(tree,[0.01,1]);
 

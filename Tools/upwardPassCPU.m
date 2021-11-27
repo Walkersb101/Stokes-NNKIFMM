@@ -16,6 +16,7 @@ function [uppot] = upwardPassCPU(tree,potentials,arguments)
 %           potential
 
 kernelPar = arguments.kernelPar;
+blockSize = arguments.blockSize;
 
 coronaRes = arguments.coronaRes;
 coronaShells = arguments.coronaShells;
@@ -47,7 +48,7 @@ for level = levels:-1:0
             nodepoints = reshape(nodepoints.',[],1);
             nodepotentials = reshape(nodepotentials.',[],1);
 
-            RHS = blockcomputation(nodepoints,downsurf,nodepotentials,kernelPar);
+            RHS = blockcomputation(nodepoints,downsurf,nodepotentials,blockSize,kernelPar);
 
         else
 
@@ -62,7 +63,7 @@ for level = levels:-1:0
             childrenpot = uppot(children,:);
             childrenpot = reshape(childrenpot',[],1);
 
-            RHS = blockcomputation(childrensurf,downsurf,childrenpot,kernelPar);
+            RHS = blockcomputation(childrensurf,downsurf,childrenpot,blockSize,kernelPar);
 
         end
 

@@ -19,6 +19,7 @@ function [vel] = downwardPassCPU(tree,potentials,...
 %                see FMM code for fields
 
 kernelPar = arguments.kernelPar;
+blockSize = arguments.blockSize;
 
 coronaRes = arguments.coronaRes;
 coronaShells = arguments.coronaShells;
@@ -59,7 +60,7 @@ for level = 1:1:levels
             
             vpot = reshape(uppot(v,:)',[],1);
            
-            RHS = RHS + blockcomputation(vsurf,upsurf,vpot,kernelPar);
+            RHS = RHS + blockcomputation(vsurf,upsurf,vpot,blockSize,kernelPar);
             
         end
         
@@ -91,7 +92,7 @@ for level = 1:1:levels
             xsurf = reshape(xsurf',[],1);
             xpot = reshape(xpot',[],1);
             
-            RHS = RHS + blockcomputation(xsurf,upsurf,xpot,kernelPar);
+            RHS = RHS + blockcomputation(xsurf,upsurf,xpot,blockSize,kernelPar);
             
         end
         
@@ -102,7 +103,7 @@ for level = 1:1:levels
         
         parentpot = downpot(parentnode,:)';
         
-        RHS = RHS + blockcomputation(parentsurf,upsurf,parentpot,kernelPar);
+        RHS = RHS + blockcomputation(parentsurf,upsurf,parentpot,blockSize,kernelPar);
         
         pot = kernel(downsurf,upsurf,kernelPar) \ RHS;
 
@@ -131,7 +132,7 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
     leafpoints = tree.points(leafslice,:);
     leafpoints = reshape(leafpoints',[],1);
     
-    veltemp = blockcomputation(downsurf,leafpoints,nodepot,kernelPar);
+    veltemp = blockcomputation(downsurf,leafpoints,nodepot,blockSize,kernelPar);
     
     u = tree.interactions{node,1};
     w = tree.interactions{node,3};
@@ -164,7 +165,7 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
         usurf = reshape(usurf',[],1);
         upot = reshape(upot',[],1);
 
-        veltemp = veltemp + blockcomputation(usurf,leafpoints,upot,kernelPar);
+        veltemp = veltemp + blockcomputation(usurf,leafpoints,upot,blockSize,kernelPar);
 
     end
     
@@ -180,7 +181,7 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
 
         wpot = reshape(uppot(w,:)',[],1);
 
-        veltemp = veltemp + blockcomputation(wsurf,leafpoints,wpot,kernelPar);
+        veltemp = veltemp + blockcomputation(wsurf,leafpoints,wpot,blockSize,kernelPar);
 
     end
     

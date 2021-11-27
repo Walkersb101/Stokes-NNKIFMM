@@ -11,7 +11,7 @@ nonLeafIndices = indices(~isleaf(tree,indices));
 newChildren = tree.nodeChildren(nonLeafIndices,:);
 newChildren = reshape(newChildren,[],1);
 if size(newChildren,1) ~= 0
-    children = [indices(isleaf(tree,indices)); newChildren ; getchildren(tree,newChildren)];
+    children = [indices(isleaf(tree,indices)); newChildren ; getChildren(tree,newChildren)];
 else
     children = indices(isleaf(tree,indices));
 end
