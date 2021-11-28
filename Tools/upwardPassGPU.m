@@ -1,11 +1,12 @@
-function [uppot] = upwardPassCPU(tree,potentials,arguments)
-%UPWARDPASSCPU Compute upwards pass of the KIFMM method on the CPU 
+function [uppot] = upwardPassGPU(tree,potentials,arguments)
+%UPWARDPASSCPU Compute upwards pass of the KIFMM method on the GPU 
 %   The upwards pass of the KIFMM method is compued onto the upwards
 %   equivent surfaces though the calculation of the potential points onto
 %   the downwards surface, where then the equivilent potentials are 
 %   calculated on the upwards surface. The algorithm then works up
 %   the tree calucating the equivent potential based on the equivelent
-%   potentials of its children. 
+%   potentials of its children. This method uses gpuArray to passivly
+%   acclerate the method using gpu computation.
 % Inputs:
 %   tree       : A tree struture containing potential points
 %   potentials : A (N,3) array of potentials
@@ -38,9 +39,9 @@ for level = levels:-1:0
         node = nodes(i);
 
         upsurf = genupsurf(tree,node,coronaRes,coronaShells);
-        upsurf = reshape(upsurf.',[],1);
+        upsurf = gpuArray(reshape(upsurf.',[],1));
 
-        downsurf = gendownsurf(tree,node,coronaRes,coronaShells);
+        downsurf = gpuArray(gendownsurf(tree,node,coronaRes,coronaShells));
         downsurf = reshape(downsurf.',[],1);
 
         % Compute potential points onto equivent surface for leaf nodes or
@@ -48,8 +49,8 @@ for level = levels:-1:0
         if isleaf(tree,node)
 
             nodeslice = tree.pointIndex(tree.potentials) == node;
-            nodepoints = potPoints(nodeslice,:);
-            nodepotentials = potentials(nodeslice,:);
+            nodepoints = gpuArray(potPoints(nodeslice,:));
+            nodepotentials = gpuArray(potentials(nodeslice,:));
 
             nodepoints = reshape(nodepoints.',[],1);
             nodepotentials = reshape(nodepotentials.',[],1);
@@ -63,11 +64,12 @@ for level = levels:-1:0
             childrensurf = zeros(coronaPoints*8,3);
             for j = 1:8
                 childrensurf(((j-1)*coronaPoints)+1:j*coronaPoints,:) = ...
-                    genupsurf(tree,children(j),coronaRes,coronaShells);
+                    gpuArray(genupsurf(tree,children(j),coronaRes,...
+                             coronaShells));
             end
             childrensurf = reshape(childrensurf',[],1);
 
-            childrenpot = uppot(children,:);
+            childrenpot = gpuArray(uppot(children,:));
             childrenpot = reshape(childrenpot',[],1);
 
             RHS = blockcomputation(childrensurf,downsurf,childrenpot,...
@@ -77,7 +79,7 @@ for level = levels:-1:0
 
         pot = kernel(upsurf,downsurf,kernelPar) \ RHS;
 
-        uppottemp(i,:) = pot';
+        uppottemp(i,:) = gather(pot');
     end
 
     uppot(nodes,:) = uppottemp;

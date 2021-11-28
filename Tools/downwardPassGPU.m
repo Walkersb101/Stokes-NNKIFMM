@@ -1,6 +1,6 @@
-function [vel] = downwardPassCPU(tree,potentials,...
+function [vel] = downwardPassGPU(tree,potentials,...
                                     uppot,arguments)
-%downwardPassCPU Compute downward pass of the KIFMM method on the CPU 
+%downwardPassCPU Compute downward pass of the KIFMM method on the GPU 
 %   The downward pass of the KIFMM method is comprised of two steps, first
 %   is the computation of the downward equivent potentials from the
 %   far field and parent nodes. This is achived through the computation of
@@ -9,7 +9,9 @@ function [vel] = downwardPassCPU(tree,potentials,...
 %   downward surface. 
 %   The for each leaf node the velocities of the target points are
 %   calculated though the effect of the downwards equivent potentials and
-%   point to point interactions of points in the near field
+%   point to point interactions of points in the near field.
+%   This method uses gpuArray to passivly accelrate the method using gpu 
+%   computation.
 %   
 % Inputs:
 %   tree       : A tree struture containing potential points
@@ -44,48 +46,50 @@ for level = 1:1:levels
     parfor (i = 1:size(nodes,2), arguments.parThreads)
         node = nodes(i);
         
-        upsurf = genupsurf(tree,node,coronaRes,coronaShells);
+        upsurf = gpuArray(genupsurf(tree,node,coronaRes,coronaShells));
         upsurf = reshape(upsurf.',[],1);
 
-        downsurf = gendownsurf(tree,node,coronaRes,coronaShells);
+        downsurf = gpuArray(gendownsurf(tree,node,coronaRes,coronaShells));
         downsurf = reshape(downsurf.',[],1);
         
         v = tree.interactions{node,2};
         x = tree.interactions{node,4};
         
-        RHS = zeros(coronaPoints*3,1);
+        RHS = zeros(coronaPoints*3,1,'gpuArray');
         
         % compute effect upward potential of nodes in V
         if ~isempty(v)
             
-            vsurf = zeros(coronaPoints*size(v,2),3);
+            vsurf = zeros(coronaPoints*size(v,2),3,'gpuArray');
             for vi = 1:size(v,2)
                 vnode = v(vi);
                 vsurf(((vi-1)*coronaPoints)+1:vi*coronaPoints,:) = ...
-                    genupsurf(tree,vnode,coronaRes,coronaShells);
+                    gpuArray(genupsurf(tree,vnode,coronaRes,coronaShells));
             end
             vsurf = reshape(vsurf',[],1);
             
-            vpot = reshape(uppot(v,:)',[],1);
+            vpot = reshape(gpuArray(uppot(v,:)'),[],1);
            
             RHS = RHS + blockcomputation(vsurf,upsurf,vpot,blockSize,...
                                          kernelPar);
             
+            vsurf = [];
+            vpot = [];
         end
         
         % compute effect of potential points in X on downward equivent 
         % potential 
         if ~isempty(x)
             
-            xsurf = zeros(tree.nodeCapacity*size(x,2),3);
-            xpot = zeros(tree.nodeCapacity*size(x,2),3);
+            xsurf = zeros(tree.nodeCapacity*size(x,2),3,'gpuArray');
+            xpot = zeros(tree.nodeCapacity*size(x,2),3,'gpuArray');
             for xi = 1:size(x,2)
                 xnode = x(xi);
 
                 xislice = tree.pointIndex(tree.potentials) == xnode;
                 
-                xipoints = potPoints(xislice,:);
-                xipointpot = potentials(xislice,:);
+                xipoints = gpuArray(potPoints(xislice,:));
+                xipointpot = gpuArray(potentials(xislice,:));
                 
                 points = size(xipoints,1);
                 
@@ -106,22 +110,27 @@ for level = 1:1:levels
             RHS = RHS + blockcomputation(xsurf,upsurf,xpot,blockSize,...
                                          kernelPar);
             
+                                     
+            xpot = [];
+            xsurf = [];
         end
         
         % compute effect of parent on downward equivent potential
         parentnode = tree.nodeParents(node);
         
-        parentsurf = gendownsurf(tree,parentnode,coronaRes,coronaShells);
+        parentsurf = gpuArray(gendownsurf(tree,parentnode,coronaRes,...
+                              coronaShells));
         parentsurf = reshape(parentsurf',[],1);
         
-        parentpot = downpot(parentnode,:)';
+        parentpot = gpuArray(downpot(parentnode,:)');
         
-        RHS = RHS + blockcomputation(parentsurf,upsurf,parentpot,blockSize,kernelPar);
+        RHS = RHS + blockcomputation(parentsurf,upsurf,parentpot,...
+                                     blockSize,kernelPar);
         
         % Compute potentials on downsurf from velocities on upward surfece 
         pot = kernel(downsurf,upsurf,kernelPar) \ RHS;
 
-        downpottemp(i,:) = pot';
+        downpottemp(i,:) = gather(pot');
     end
     
     downpot(nodes,:) = downpottemp;
@@ -138,16 +147,17 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
     
     node = leaves(i);
     
-    downsurf = gendownsurf(tree,node,coronaRes,coronaShells);
+    downsurf = gpuArray(gendownsurf(tree,node,coronaRes,coronaShells));
     downsurf = reshape(downsurf',[],1);
     
-    nodepot = downpot(node,:)';
+    nodepot = gpuArray(downpot(node,:)');
     
     leafslice = tree.pointIndex(tree.targets) == node;
-    leafpoints = targetPoints(leafslice,:);
-    leafpoints = reshape(leafpoints',[],1);
+    leafpoints = gpuArray(targetPoints(leafslice,:));
+    leafpoints = gpuArray(reshape(leafpoints',[],1));
     
-    veltemp = blockcomputation(downsurf,leafpoints,nodepot,blockSize,kernelPar);
+    veltemp = blockcomputation(downsurf,leafpoints,nodepot,blockSize,...
+                               kernelPar);
     
     u = tree.interactions{node,1};
     w = tree.interactions{node,3};
@@ -155,15 +165,15 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
     % compute point to point iteraction for connected nodes
     if ~isempty(u)
 
-        usurf = zeros(tree.nodeCapacity*size(u,2),3);
-        upot = zeros(tree.nodeCapacity*size(u,2),3);
+        usurf = zeros(tree.nodeCapacity*size(u,2),3,'gpuArray');
+        upot = zeros(tree.nodeCapacity*size(u,2),3,'gpuArray');
         for ui = 1:size(u,2)
             unode = u(ui);
 
             uislice = tree.pointIndex(tree.potentials) == unode;
 
-            uipoints = potPoints(uislice,:);
-            uipointpot = potentials(uislice,:);
+            uipoints = gpuArray(potPoints(uislice,:));
+            uipointpot = gpuArray(potentials(uislice,:));
 
             points = size(uipoints,1);
 
@@ -175,34 +185,45 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
                  uipointpot;
 
         end
+        
+        uipoints = [];
+        uipointpot = [];
+        
         usurf(~any(usurf,2),:) = [];
         upot(~any(upot,2),:) = [];
 
         usurf = reshape(usurf',[],1);
         upot = reshape(upot',[],1);
 
-        veltemp = veltemp + blockcomputation(usurf,leafpoints,upot,blockSize,kernelPar);
+        veltemp = veltemp + blockcomputation(usurf,leafpoints,upot,...
+                                             blockSize,kernelPar);
+                                         
+        usurf = [];
+        upot = [];
 
     end
     
     % compute effect of smaller nearby nodes
     if ~isempty(w)
             
-        wsurf = zeros(coronaPoints*size(w,2),3);
+        wsurf = zeros(coronaPoints*size(w,2),3,'gpuArray');
         for wi = 1:size(w,2)
             wnode = w(wi);
             wsurf(((wi-1)*coronaPoints)+1:wi*coronaPoints,:) = ...
-                genupsurf(tree,wnode,coronaRes,coronaShells);
+                gpuArray(genupsurf(tree,wnode,coronaRes,coronaShells));
         end
         wsurf = reshape(wsurf',[],1);
 
-        wpot = reshape(uppot(w,:)',[],1);
+        wpot = reshape(gpuArray(uppot(w,:)'),[],1);
 
-        veltemp = veltemp + blockcomputation(wsurf,leafpoints,wpot,blockSize,kernelPar);
+        veltemp = veltemp + blockcomputation(wsurf,leafpoints,wpot,...
+                                             blockSize,kernelPar);
 
+        wsurf = [];
+        wpot = [];
     end
     
-    velpar{i} = reshape(veltemp,3,[])';
+    velpar{i} = gather(reshape(veltemp,3,[])');
     
 end
 

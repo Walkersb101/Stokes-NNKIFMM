@@ -1,5 +1,5 @@
-function [points] = Sphere(r,centre, N)
-% s  Discretize a sphere
+function [points] = sphere(r,centre, N)
+% sphere  Discretize a sphere
 % Discretize a sphere based on a cubic discretization. The sphere has
 % radius r and centre centre. The cubic discretization has N points in each
 % axis

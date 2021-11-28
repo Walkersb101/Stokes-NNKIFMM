@@ -1,4 +1,4 @@
-function [s] = kernel(x,x0,param)
+function [S] = kernel(x,x0,param)
 % s  Compute the stokeslet matrix with x and x0
 % Compute the a (3*M, 3*N) matrix based on the form of the regualraised
 % stokeslet given in https://aip.scitation.org/doi/abs/10.1063/1.1830486
@@ -10,7 +10,7 @@ function [s] = kernel(x,x0,param)
 %  param : Parameters for kernel
 %
 %Output:
-%   s : (3*M, 3*N) stokeslet matrix 
+%   S : (3*M, 3*N) stokeslet matrix 
 
 epsilon = param(1);
 mu = param(2);
@@ -32,5 +32,5 @@ dyadic = (repmat(kron(reshape(x,3,[]),ones(1,3)),M,1)-x0.*ones(1,3*N)).*...
 % compute second term in S
 isotropic = kron(r2+2*epsilon^2,eye(3));
 % Add terms and multiply by invs
-s = (dyadic + isotropic).*invs; 
+S = (dyadic + isotropic).*invs; 
 end
