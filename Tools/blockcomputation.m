@@ -25,6 +25,5 @@ for i = 1:length(blocks)-1
     RHS(blocks(i):blocks(i+1)-1,:) = ...
         kernel(x,x0(blocks(i):blocks(i+1)-1,:),kernalPar)*potentials;
 end
-
 end
 
