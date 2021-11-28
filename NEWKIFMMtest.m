@@ -16,9 +16,6 @@ points = [sphere(1,[-10 -10 -10],30);
      
 potentials = 100*rand(size(points))-50;
 
-disp(numel(points))
-
-
 tic
 N = size(points,1);
 fine = gpuArray(reshape(points.',[],1));

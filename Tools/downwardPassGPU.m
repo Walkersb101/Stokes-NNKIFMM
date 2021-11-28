@@ -167,6 +167,7 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
 
         usurf = zeros(tree.nodeCapacity*size(u,2),3,'gpuArray');
         upot = zeros(tree.nodeCapacity*size(u,2),3,'gpuArray');
+        uindex = zeros(tree.nodeCapacity*size(u,2),1,'gpuArray');
         for ui = 1:size(u,2)
             unode = u(ui);
 
@@ -183,18 +184,21 @@ parfor (i = 1:size(leaves,1), arguments.parThreads)
             upot(((ui-1)*tree.nodeCapacity)+1:...
                  ((ui-1)*tree.nodeCapacity)+points,:) = ...
                  uipointpot;
+            uindex(((ui-1)*tree.nodeCapacity)+1:...
+                 ((ui-1)*tree.nodeCapacity)+points,:) = ...
+                 1;
 
         end
         
         uipoints = [];
         uipointpot = [];
         
-        usurf(~any(usurf,2),:) = [];
-        upot(~any(upot,2),:) = [];
+        usurf(~uindex,:) = [];
+        upot(~uindex,:) = [];
 
         usurf = reshape(usurf',[],1);
         upot = reshape(upot',[],1);
-
+        
         veltemp = veltemp + blockcomputation(usurf,leafpoints,upot,...
                                              blockSize,kernelPar);
                                          

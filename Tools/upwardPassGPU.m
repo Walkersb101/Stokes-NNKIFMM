@@ -35,7 +35,8 @@ for level = levels:-1:0
     uppottemp = zeros(size(nodes,2),coronaPoints*3);
 
     % compute upward potential of node of the level in parallel
-    parfor (i = 1:size(nodes,2), arguments.parThreads)
+    for i = 1:size(nodes,2)
+%     parfor (i = 1:size(nodes,2), arguments.parThreads)
         node = nodes(i);
 
         upsurf = genupsurf(tree,node,coronaRes,coronaShells);
@@ -49,9 +50,12 @@ for level = levels:-1:0
         if isleaf(tree,node)
 
             nodeslice = tree.pointIndex(tree.potentials) == node;
+            
             nodepoints = gpuArray(potPoints(nodeslice,:));
             nodepotentials = gpuArray(potentials(nodeslice,:));
 
+            
+            
             nodepoints = reshape(nodepoints.',[],1);
             nodepotentials = reshape(nodepotentials.',[],1);
             

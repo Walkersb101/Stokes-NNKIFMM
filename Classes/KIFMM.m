@@ -56,6 +56,11 @@ classdef KIFMM
         
         function vel = computeVel(this, potentials)
             
+            if this.arguments.GMRES == 1
+                potentials = reshape(potentials,3,[]).';
+            end
+            
+            
             if this.arguments.GPU == 0
                 uppot = upwardPassCPU(this.tree,potentials,this.arguments);
                 vel = downwardPassCPU(this.tree,potentials,uppot,...
