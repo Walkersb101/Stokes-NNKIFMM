@@ -82,7 +82,7 @@ classdef OcTree < handle
             this.nodeParents(1) = 0;
             this.nodeChildren = 2:9;
             this.nodeCount = 1;
-            this.nodeCapacity = this.arguments.nodeCapacity;
+            this.nodeCapacity = min(this.arguments.nodeCapacity,numPts-1);
             
             this.PreAllocateSpace;
             this.Divide(1);

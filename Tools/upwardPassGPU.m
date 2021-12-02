@@ -40,9 +40,9 @@ for level = levels:-1:0
         node = nodes(i);
 
         upsurf = genupsurf(tree,node,coronaRes,coronaShells);
-        upsurf = gpuArray(reshape(upsurf.',[],1));
+        upsurf = reshape(upsurf.',[],1);
 
-        downsurf = gpuArray(gendownsurf(tree,node,coronaRes,coronaShells));
+        downsurf = gendownsurf(tree,node,coronaRes,coronaShells);
         downsurf = reshape(downsurf.',[],1);
 
         % Compute potential points onto equivent surface for leaf nodes or
@@ -51,16 +51,14 @@ for level = levels:-1:0
 
             nodeslice = tree.pointIndex(tree.potentials) == node;
             
-            nodepoints = gpuArray(potPoints(nodeslice,:));
-            nodepotentials = gpuArray(potentials(nodeslice,:));
-
-            
+            nodepoints = potPoints(nodeslice,:);
+            nodepotentials = potentials(nodeslice,:);
             
             nodepoints = reshape(nodepoints.',[],1);
             nodepotentials = reshape(nodepotentials.',[],1);
             
             RHS = blockcomputation(nodepoints,downsurf,nodepotentials,...
-                                   blockSize,kernelPar);
+                                   blockSize,kernelPar,1);
 
         else
 
@@ -68,22 +66,24 @@ for level = levels:-1:0
             childrensurf = zeros(coronaPoints*8,3);
             for j = 1:8
                 childrensurf(((j-1)*coronaPoints)+1:j*coronaPoints,:) = ...
-                    gpuArray(genupsurf(tree,children(j),coronaRes,...
-                             coronaShells));
+                    genupsurf(tree,children(j),coronaRes,coronaShells);
+                             
             end
             childrensurf = reshape(childrensurf',[],1);
 
-            childrenpot = gpuArray(uppot(children,:));
+            childrenpot = uppot(children,:);
             childrenpot = reshape(childrenpot',[],1);
 
             RHS = blockcomputation(childrensurf,downsurf,childrenpot,...
-                                   blockSize,kernelPar);
+                                   blockSize,kernelPar,1);
 
         end
 
+        
+        
         pot = kernel(upsurf,downsurf,kernelPar) \ RHS;
 
-        uppottemp(i,:) = gather(pot');
+        uppottemp(i,:) = pot';
     end
 
     uppot(nodes,:) = uppottemp;

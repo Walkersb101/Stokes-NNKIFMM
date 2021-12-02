@@ -1,0 +1,23 @@
+N=47;
+
+points = [sphere(1,[-10 -10 -10],N);...
+          sphere(1,[10 -10 -10],N);...
+          sphere(1,[-10 10 -10],N);...
+          sphere(1,[10 10 -10],N);...
+          sphere(1,[-10 -10 10],N);...
+          sphere(1,[10 -10 10],N);...
+          sphere(1,[-10 10 10],N);...
+          sphere(1,[10 10 10],N)]; 
+
+tree = OcTree(points,points,'nodeCapacity',800,'maxDepth',21);
+
+hold on
+plotcube(tree.nodeCorners(32,:))
+corona = genupsurf(tree,32,8,2);
+
+plot3(corona(:,1),corona(:,2),corona(:,3),'.')
+
+corona = gendownsurf(tree,32,8,2);
+plot3(corona(:,1),corona(:,2),corona(:,3),'.')
+
+size(corona)
