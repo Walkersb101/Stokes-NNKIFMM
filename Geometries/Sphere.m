@@ -9,7 +9,7 @@ function [points] = sphere(r,centre, N)
 %   N      : Number of points in each axis of the discretization
 %
 %Output:
-%   s   : (M, 3) array of point on the sphere
+%   points   : (M, 3) array of point on the sphere
 
 
 % generate square grid

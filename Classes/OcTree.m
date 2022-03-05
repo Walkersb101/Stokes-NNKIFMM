@@ -7,13 +7,20 @@ classdef OcTree < handle
     %   linearly with each row representing a new node. 
     %
     % Inputs:
-    %   points     : (N,3) array storing the postion of each point
-    %   arguement  : See Optional Arguments below
+    %   potPoints    : (N,3) array storing the postion of each potential 
+    %                   point
+    %   targetPoints : (M,3) array of target points
+    %   arguement    : See Optional Arguments below
     %
     % Optional Arguments:
     %   nodeCapacity : sets the maximum capacity of the node(default = 200)
     %   maxDepth     : sets the maximum number of node divsions
     %                  (default = 21)
+    %   nearest      : 0 for normal, 1 for Nearest interpolation
+    %   finepoints   : (Q,3) array of fine quadrature points for nearest
+    %   NN           : (Q, N) sparce Matrix for interpolation, generated if
+    %                   not given
+
     %
     % Properties:
     %   points       : (N,3) array storing the postion of each point
@@ -21,6 +28,8 @@ classdef OcTree < handle
     %                  points
     %   targets      : (N,1) logic array to slice points into target
     %                  points
+    %   finePoints   : (Q,3) array of finerature points)
+    %   NN           : (Q,N) sparce nearest interpolation matrix
     %   pointIndex   : Store the node index in which the point is in
     %   nodeCorners  : Stores the coorinates of the corners of the node
     %                  [x1 y1 z1 x2 y2 z2] where point 1 is the lower left
@@ -41,12 +50,16 @@ classdef OcTree < handle
     %   DeAllocateSpace  : Removes empty pre allocated space
     %   Divide           : Recursive function to divide node
     %   Dividenode       : Computes all variables for given node
+    %   cullNodes        : Seperate potential and target points into
+    %                      separate trees
     
     
     properties
         points;
         potentials;
         targets;
+        finePoints;
+        NN;
         pointIndex;
         nodeCorners;
         nodeLevel;
@@ -71,6 +84,10 @@ classdef OcTree < handle
             IP = inputParser;
             addOptional(IP,'nodeCapacity',200);
             addOptional(IP,'maxDepth',21);
+            addOptional(IP,'finePoints',[]);
+            addOptional(IP,'nearest',0);
+            addOptional(IP,'NN',[]);
+            addOptional(IP,'blockSize',0.2)
             parse(IP,varargin{:});
             this.arguments = IP.Results;
             
@@ -88,7 +105,26 @@ classdef OcTree < handle
             this.Divide(1);
             this.DeAllocateSpace;
             
+            %this.cullNodes;
+            
             this.geninteractionlists;
+            
+            if isempty(this.arguments.finePoints)
+                this.arguments.nearest = 0;
+            else
+                this.arguments.nearest = 1;
+                this.finePoints = this.arguments.finePoints;
+                this.arguments.finePoints = [];
+            end
+            
+            this.NN = [];
+            if isempty(this.arguments.NN) && this.arguments.nearest
+                this.NN = nearestMatrix(potPoints,this.finePoints,...
+                                    this.arguments.blockSize);
+            else
+                this.NN = this.arguments.NN;
+                this.arguments.NN = [];
+            end
         end
         
         function PreAllocateSpace(this)
@@ -184,6 +220,47 @@ classdef OcTree < handle
             this.nodeCount = this.nodeCount+8;
         end
         
+        function cullNodes(this)
+            %CULLNODES cull tree such that there is only node capacity
+            %          target or potential nodes
+            
+            levels = max(this.nodeLevel);
+            for level = levels-1:-1:0
+                nodes = find(this.nodeLevel'==level & ...
+                             ~isleaf(this,1:this.nodeCount,'All'));
+                for i = 1:numel(nodes)
+                    node = nodes(i);
+                    children = getChildren(this,node);
+                    childrenPoints = any(this.pointIndex == children',2);
+                    childrenTargets = childrenPoints & this.targets;
+                    childrenPotentials = childrenPoints & this.potentials;
+                    state = 0;
+                    if sum(childrenTargets,'all') <= this.nodeCapacity
+                        this.pointIndex(childrenTargets) = node;
+                        state = state + 1;
+                    end
+                    if sum(childrenPotentials,'all') <= this.nodeCapacity
+                        this.pointIndex(childrenTargets) = node;
+                        state = state + 1;
+                    end
+                    if state == 2
+                        this.nodeLevel(children) = [];
+                        this.nodeParents(children) = [];
+                        this.nodeChildren(children,:) = [];
+                        this.nodeChildren(node,:) = zeros(1,8);
+                        this.nodeChildren(this.nodeChildren > ...
+                                          max(children,[],'all')) = ...
+                        this.nodeChildren(this.nodeChildren > ...
+                                          max(children,[],'all')) - 8;
+                        this.nodeCorners(children,:) = [];
+                        this.nodeCount = this.nodeCount - 8;
+                        nodes(nodes > max(children,[],'all')) = ...
+                        nodes(nodes > max(children,[],'all')) - 8;    
+                    end
+                end
+            end
+        end
+        
         function geninteractionlists(this)
             %GENERATEINTERACTIONLISTS Generate U,V,W and X interaction 
             %                         lists
@@ -230,8 +307,8 @@ classdef OcTree < handle
             indexLevel = this.nodeLevel(index);
 
             %generate U
-            if isleaf(this,index)
-                U = find(nodeintersection(this,index,(1:this.nodeCount)') & isleaf(this,(1:this.nodeCount)'));
+            if isleaf(this,index,'Target')
+                U = find(nodeintersection(this,index,(1:this.nodeCount)') & isleaf(this,(1:this.nodeCount)','Potential'));
             else
                 U = [];
             end
@@ -242,7 +319,7 @@ classdef OcTree < handle
 
             parentNeigbours = setdiff(parentNeigbours, [this.nodeParents(parentNeigbours) parentIndex]);
 
-            parentNeigbours = parentNeigbours(~isleaf(this,parentNeigbours));
+            parentNeigbours = parentNeigbours(~isleaf(this,parentNeigbours,'All'));
             parentNeigboursChildren = reshape(this.nodeChildren(parentNeigbours,:),[],1);
             parentNeigboursChildren = parentNeigboursChildren(~nodeintersection(this,index,parentNeigboursChildren));
 
@@ -250,14 +327,26 @@ classdef OcTree < handle
 
 
             % generate W
-            if isleaf(this,index)
+            if isleaf(this,index,'Target')
                 neighbours = find(nodeintersection(this,index,(1:this.nodeCount)') & (indexLevel >= this.nodeLevel)');
                 neighbours = setdiff(neighbours, this.nodeParents(neighbours));
 
                 neighbourChildren = getChildren(this,neighbours);
-                neighbourChildren = neighbourChildren(isleaf(this,neighbourChildren));
+                neighbourChildren = neighbourChildren(isleaf(this,neighbourChildren,'Potential'));
 
                 W = setdiff(neighbourChildren, U);
+                
+                for level = max(this.nodeLevel):-1:1
+                    nodes = find(this.nodeLevel==level);
+                    for i = 1:size(nodes,2)
+                        children = this.nodeChildren(nodes(i),:);
+                        if all(ismember(children,W))
+                            W = [setdiff(W,children) nodes(i)];
+                        end
+                    end
+                end
+                
+                
             else
                 W = [];
             end

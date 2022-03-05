@@ -1,4 +1,4 @@
-function [surf] = gendownsurf(tree, index, resolution, shells)
+function [surf] = gendownsurf(tree, index, resolution, shells, GPU)
 %gendownsurf Generate downward corona with set resolution and rings
 %   Generate a square corna with discritisation of
 %   (resolution,resolution,resolution). Shells
@@ -12,11 +12,36 @@ function [surf] = gendownsurf(tree, index, resolution, shells)
 %Output:
 %   points     : (n,3) array of points on the outer shell
 
+if ~exist('GPU','var')
+     % third parameter does not exist, so default it to something
+      GPU = 0;
+end
 
+if GPU
     coords = tree.nodeCorners(index,:);
     width = coords(4:6)- coords(1:3);
     nearboundary = [coords(1:3) - width coords(4:6) + width];
-    
+
+    x = gpuArray.linspace(nearboundary(1),nearboundary(4),resolution);
+    y = gpuArray.linspace(nearboundary(2),nearboundary(5),resolution);
+    z = gpuArray.linspace(nearboundary(3),nearboundary(6),resolution);
+
+    [X,Y,Z] = meshgrid(x,y,z);
+
+    X(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+    Y(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+    Z(shells+1:end-shells,shells+1:end-shells,shells+1:end-shells)= NaN;
+
+    X=reshape(X(~isnan(X)),[],1);
+    Y=reshape(Y(~isnan(Y)),[],1);
+    Z=reshape(Z(~isnan(Z)),[],1);
+
+    surf = [X Y Z];
+else
+    coords = tree.nodeCorners(index,:);
+    width = coords(4:6)- coords(1:3);
+    nearboundary = [coords(1:3) - width coords(4:6) + width];
+
     x = linspace(nearboundary(1),nearboundary(4),resolution);
     y = linspace(nearboundary(2),nearboundary(5),resolution);
     z = linspace(nearboundary(3),nearboundary(6),resolution);
@@ -32,6 +57,8 @@ function [surf] = gendownsurf(tree, index, resolution, shells)
     Z=reshape(Z(~isnan(Z)),[],1);
 
     surf = [X Y Z];
+end
+
  
 end
 
