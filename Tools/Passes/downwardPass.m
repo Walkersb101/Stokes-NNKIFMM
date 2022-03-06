@@ -42,8 +42,7 @@ for level = 1:1:levels
     downpottemp = zeros(size(nodes,2),coronaPoints*3);
     
    % compute downward potential of node of the level in parallel
-   for i = 1:size(nodes,2)
-   %parfor (i = 1:size(nodes,2), arguments.parThreads) 
+   parfor (i = 1:size(nodes,2), arguments.parThreads) 
 
         node = nodes(i);
 
