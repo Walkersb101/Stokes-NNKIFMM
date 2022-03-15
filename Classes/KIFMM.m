@@ -126,7 +126,7 @@ classdef KIFMM
             
             GMRES_temp = this.arguments.GMRES;
             this.arguments.GMRES = 1;
-            [pot,flag,relres,iter,resvec] = gmres(@this.computeVel,vel,varargin{:});
+            [pot,flag,relres,iter,resvec] = gmres(@(x) this.computeVel(x),vel,varargin{:});
             this.arguments.GMRES = GMRES_temp;
             
         end

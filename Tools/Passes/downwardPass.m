@@ -173,8 +173,8 @@ vel = zeros(size(targetPoints));
 velpar = cell(size(leaves,1),1);
 
 % compute potentials on points for all leaf nodes
-for i = 1:size(leaves,1)
-%parfor (i = 1:size(leaves,1), arguments.parThreads)
+
+parfor (i = 1:size(leaves,1), arguments.parThreads)
     
     node = leaves(i);
     

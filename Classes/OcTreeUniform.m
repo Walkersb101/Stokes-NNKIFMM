@@ -1,4 +1,4 @@
-classdef OcTree < handle
+classdef OcTreeUniform < handle
     % OCTree Compute OcTree for input points
     %   Generate OcTree for input points. The root node will be the
     %   smallest cube which encompases all points given. The this will
@@ -50,9 +50,6 @@ classdef OcTree < handle
     %   DeAllocateSpace  : Removes empty pre allocated space
     %   Divide           : Recursive function to divide node
     %   Dividenode       : Computes all variables for given node
-    %   cullNodes        : Seperate potential and target points into
-    %                      separate trees
-    
     
     properties
         points;
@@ -72,14 +69,14 @@ classdef OcTree < handle
     end
     
     methods
-        function this = OcTree(potPoints,targetPoints,varargin)
+        function this = OcTreeUniform(potPoints,targetPoints,varargin)
             %OcTree Construct an instance of this class
             %   Defines variables for class and initialises the this build
-            points = unique([potPoints;targetPoints],'rows','stable');
-            this.potentials = ismember(points,potPoints,'rows');
-            this.targets = ismember(points,targetPoints,'rows');
+            this.points = unique([potPoints;targetPoints],'rows','stable');
+            this.potentials = ismember(this.points,potPoints,'rows');
+            this.targets = ismember(this.points,targetPoints,'rows');
             
-            numPts = size(points,1);
+            numPts = size(this.points,1);
             
             IP = inputParser;
             addOptional(IP,'parThreads',0);
@@ -92,9 +89,8 @@ classdef OcTree < handle
             parse(IP,varargin{:});
             this.arguments = IP.Results;
             
-            this.nodeCorners = [min(points,[],'all')*ones(1,3)...
-                               max(points,[],'all')*ones(1,3)];
-            this.points = points;
+            this.nodeCorners = [min(this.points,[],'all')*ones(1,3)...
+                               max(this.points,[],'all')*ones(1,3)];
             this.pointIndex = ones(numPts,1);
             this.nodeLevel = 0;
             this.nodeParents(1) = 0;
@@ -103,14 +99,15 @@ classdef OcTree < handle
             this.nodeCapacity = min(this.arguments.nodeCapacity,numPts-1);
             
             this.PreAllocateSpace;
-            this.Divide(1);
+            this.Divide;
             this.DeAllocateSpace;
-            
-            this.cullNodes;
             
             this.geninteractionlists;
             
-            if this.arguments.nearest && ~isempty(this.arguments.finePoints)
+            if isempty(this.arguments.finePoints)
+                this.arguments.nearest = 0;
+            else
+                this.arguments.nearest = 1;
                 this.finePoints = this.arguments.finePoints;
                 this.arguments.finePoints = [];
             end
@@ -150,7 +147,7 @@ classdef OcTree < handle
             this.nodeCorners(this.nodeCount+1:end,:) = [];
         end
         
-        function Divide(this, startingnodes)
+        function Divide(this)
             %Divide Recursive function to divide points into nodes.
             %   Recursive function which takes an array of nodes and an 
             %   imput and divides them in order. Function will generate 
@@ -158,21 +155,29 @@ classdef OcTree < handle
             %
             %Inputs:
             %   startingnodes : Index of nodes which need to be divides.
-            
-            
-            for i = 1:length(startingnodes)
-               node = startingnodes(i);
+
+            this.Dividenode(1);
+            level = 1;
+            divide = 1;
+            nodes = find(this.nodeLevel == level);
+            while divide == 1
+                divide = 0;
+                for i = 1:numel(nodes)
+                    this.Dividenode(nodes(i));
+                end
+                nodes = find(this.nodeLevel == level+1);
+                for i = 1:numel(nodes)
+                    if nnz(this.pointIndex==nodes(i)) > this.nodeCapacity
+                        divide = 1;
+                        break;
+                    end
+                end
+                if level+1 >= this.arguments.maxDepth
+                    error('Max level reached: Increase Max Depth')
+                else
+                    level = level + 1;
+                end
                
-               if this.nodeLevel(node)+1 >= this.arguments.maxDepth
-                   error('Max level reached: Increase Max Depth')
-               end
-               
-               oldCount = this.nodeCount;
-               if nnz(this.pointIndex==node) > this.nodeCapacity
-                   this.Dividenode(node);
-                   this.Divide(oldCount+1:this.nodeCount);
-                   continue;
-               end
             end
         end
         
@@ -217,47 +222,6 @@ classdef OcTree < handle
             this.nodeParents(newnodeIndex) = node;
             this.pointIndex(nodePtMask) = newnodeIndex(pointLoc);
             this.nodeCount = this.nodeCount+8;
-        end
-        
-        function cullNodes(this)
-            %CULLNODES cull tree such that there is only node capacity
-            %          target or potential nodes
-            
-            levels = max(this.nodeLevel);
-            for level = levels-1:-1:0
-                nodes = find(this.nodeLevel'==level & ...
-                             ~isleaf(this,1:this.nodeCount,'All'));
-                for i = 1:numel(nodes)
-                    node = nodes(i);
-                    children = getChildren(this,node);
-                    childrenPoints = any(this.pointIndex == children',2);
-                    childrenTargets = childrenPoints & this.targets;
-                    childrenPotentials = childrenPoints & this.potentials;
-                    state = 0;
-                    if sum(childrenTargets,'all') <= this.nodeCapacity
-                        this.pointIndex(childrenTargets) = node;
-                        state = state + 1;
-                    end
-                    if sum(childrenPotentials,'all') <= this.nodeCapacity
-                        this.pointIndex(childrenTargets) = node;
-                        state = state + 1;
-                    end
-                    if state == 2
-                        this.nodeLevel(children) = [];
-                        this.nodeParents(children) = [];
-                        this.nodeChildren(children,:) = [];
-                        this.nodeChildren(node,:) = zeros(1,8);
-                        this.nodeChildren(this.nodeChildren > ...
-                                          max(children,[],'all')) = ...
-                        this.nodeChildren(this.nodeChildren > ...
-                                          max(children,[],'all')) - 8;
-                        this.nodeCorners(children,:) = [];
-                        this.nodeCount = this.nodeCount - 8;
-                        nodes(nodes > max(children,[],'all')) = ...
-                        nodes(nodes > max(children,[],'all')) - 8;    
-                    end
-                end
-            end
         end
         
         function geninteractionlists(this)

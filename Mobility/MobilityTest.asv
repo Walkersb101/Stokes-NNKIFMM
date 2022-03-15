@@ -1,0 +1,8 @@
+clear all; close all; clc;
+
+trigrid=TriangularLattice(3,[10,10]);
+
+spheres = Swimmers();
+for i = 1:size(trigrid,1)
+    spheres.addSwimmer(prolateSpheroid(1,2,[trigrid(i,1), trigrid(i,1), 0]))
+end
