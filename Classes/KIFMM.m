@@ -108,14 +108,9 @@ classdef KIFMM
                 potentials = reshape(potentials,3,[]).';
             end
             
-            
-            if this.arguments.GPU == 0
-                vel = reducedPassCPU(this.tree,potentials,this.arguments);
-            else
-                % need to add
-            end
-            
-            
+            vel = reducedPass(this.tree,potentials,this.arguments,...
+                              this.arguments.GPU);
+
             if this.arguments.GMRES == 1
                 vel = reshape(vel.',[],1);
             end

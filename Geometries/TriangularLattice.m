@@ -1,4 +1,4 @@
-function [trigrid] = TriangularLattice(h_dist,limits)
+function [X,Y] = TriangularLattice(h_dist,limits)
 %TRAINGULARLATTICE Summary of this function goes here
 %   Detailed explanation goes here
 %% Triangular grid information
@@ -24,5 +24,6 @@ while y_current < y_lim
     trigrid = [trigrid; [xx,yy]];
     y_current = y_current + v_dist;
 end
+X = trigrid(:,1); Y = trigrid(:,2);
 end
 

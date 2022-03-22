@@ -1,17 +1,5 @@
 function [NN] = nearestMatrix(coarse,fine,blockSize,threads)
-%NEARESTBLOCKCOMPUTATION Compute matrix vector product of kernel with 
-%potential using nearest neighbour interpolation
-%   Calcuated the matrix vector product of kernel with potential in block
-%   of maximum size blockSize
-% Inputs:
-%   x         : A (3*N,1) vector of fine stokelet points
-%   x0        : A (3*Q,1) vector of coarse stokelet points
-%   blockSize : Maximum size of kernel matrix in GB
-%   threads   : number of parallel threads
-%
-% Outputs:
-%   NN : A (Q,N) matrix to map the fine stokelet points on to the coarse 
-%        stokelet points
+
 
 coarse = reshape(coarse.',[],1);
 fine = reshape(fine.',[],1);

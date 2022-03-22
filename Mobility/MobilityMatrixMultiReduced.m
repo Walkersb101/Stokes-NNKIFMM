@@ -1,6 +1,7 @@
-function [b] = MobilityMatrixMulti(f,swimmers)
+function [b] = MobilityMatrixMultiReduced(f,swimmers)
+tic
 Nearest = swimmers.Tree.arguments.nearest;
-[points,finePoints,NN] = swimmers.getSwimmers();
+points = swimmers.getSwimmerBnd();
 
 noSwimmers = swimmers.swimmerNo();
 swSizes = swimmers.getSwimmerSizes();
@@ -21,13 +22,10 @@ N=numel(points)/3;
 b = zeros(3*N+6*noSwimmers,1);
 
 swimmers.FMM.arguments.GMRES = 1;
-b(1:end-6*noSwimmers) = swimmers.FMM.computeVel(force);
-
-velsub = [];
-for i = 1:noSwimmers
-	velsub = [velsub;repmat(U(((i-1)*3)+1:((i-1)*3)+3),swSizes(i),1)];
-end
-b(1:end-6*noSwimmers) = b(1:end-6*noSwimmers) - velsub;
+b(1:end-6*noSwimmers) = swimmers.FMM.reducedComputeVel(force);
+toc
+b(1:end-6*noSwimmers) = b(1:end-6*noSwimmers) - ...
+                        sum(kron(ones(N,1),reshape(U,3,[])),2);
 
 Ze  = zeros(N, noSwimmers);
 x1m = zeros(N, noSwimmers);
@@ -47,7 +45,6 @@ b(1:end-6*noSwimmers) = b(1:end-6*noSwimmers) + interleaveComponents(...
                                                 rotation(2*N+1:end));  
 
 if Nearest
-    Q = numel(finePoints)/3;
     af = zeros(noSwimmers, N);
     for n= 1 : noSwimmers
         af(n,swIndex(n):swIndex(n+1)-1) = ...
@@ -59,8 +56,8 @@ if Nearest
     x1m = zeros(noSwimmers,N);
     x2m = zeros(noSwimmers,N);
     x3m = zeros(noSwimmers,N);
-    [x1,x2,x3]=extractComponents(finePoints'*NN);
-    for n=1:noSwimmers
+    [x1,x2,x3]=ExtractComponents(finepoints'*NNsw);
+    for n=1:nSw
         x1m(n,swIndex(n):swIndex(n+1)-1)=x1(swIndex(n):swIndex(n+1)-1);
         x2m(n,swIndex(n):swIndex(n+1)-1)=x2(swIndex(n):swIndex(n+1)-1);
         x3m(n,swIndex(n):swIndex(n+1)-1)=x3(swIndex(n):swIndex(n+1)-1);
@@ -93,5 +90,5 @@ else
     rotation(1:noSwimmers),rotation(noSwimmers+1:2*noSwimmers),...
     rotation(2*noSwimmers+1:end));
 end
+toc
 end
-

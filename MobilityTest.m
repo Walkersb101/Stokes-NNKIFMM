@@ -8,12 +8,12 @@ trigrid=TriangularLattice(3,[10,10]);
 
 spheres = Swimmers();
 for i = 1:size(trigrid,1)
-    spheres.addSwimmer(prolateSpheroid(1,2,[trigrid(i,1), trigrid(i,2), 0],0.1),[trigrid(i,1), trigrid(i,2), 0]);
+    spheres.addSwimmer(prolateSpheroid(1,2,[trigrid(i,1), trigrid(i,2), 0],0.1),[trigrid(i,1), trigrid(i,2), 0],[1;0;0;0;1;0]);
 end
 
 vel = [1 0 0];
 
-N = sum(spheres.getSwimmerSizes())
+N = sum(spheres.getSwimmerSizes());
 
 ux = vel(1)*ones(N,1);
 uy = vel(2)*ones(N,1);
@@ -26,7 +26,7 @@ points = spheres.getSwimmers();
 spheres.genTree('nodeCapacity',2000);
 spheres.genKIFMM([1e-5, 1],'parThreads',4,'GPU',1);
 
-afunc = @(x) MobilityMatrixMulti(x, spheres, [0;0;0;1;0;0;0;1;0]);
+afunc = @(x) MobilityMatrixMulti(x, spheres);
 
 out = gmres(afunc, [point_vel;zeros(6*spheres.swimmerNo(),1)],[],1e-4,100);
 

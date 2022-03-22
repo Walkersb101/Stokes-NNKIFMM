@@ -1,4 +1,4 @@
-function [points] = prolateSpheroid(a,c,centre,h)
+function [points] = prolateSpheroid(a,c,h)
 % prolateSpheroid  Discretize a prolate Spheroid
 % Discretize a prolate spheroid with major axis c and minor axis a, the
 % discretiation keeps the spacing of points to be approximatly h
@@ -26,7 +26,4 @@ for i = 2:vN-1
     z = z*ones(uN,1);
     points = vertcat(points, [x,y,z]);
 end
-
-points = points + centre.*ones(size(points,1),1);
-
 end
