@@ -36,7 +36,8 @@ swimmers.genKIFMM(kernalPar,'parThreads',threads,'GPU',GPU,...
 pointVel = swimmers.getVelocities();
 fluidVel = fluidFunc(t,swimmers.getSwimmers());
 
-vel = pointVel; vel = vel(1:size(fluidVel,1),:) + fluidVel;
+vel = pointVel; vel(1:size(fluidVel,1),:) = vel(1:size(fluidVel,1),:) + ...
+                                            fluidVel;
 
 [force,moment] = swimmers.getForceMoment();
 

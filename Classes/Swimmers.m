@@ -134,8 +134,8 @@ classdef Swimmers < handle
             
             if length(varargin) == 2
                 this.Boundary = varargin{1};
-                this.BoundaryFine = 0;
-                this.BoundaryNN =0;
+                this.BoundaryFine = double.empty(0,3);
+                this.BoundaryNN = double.empty(0,0);
                 this.BoundaryVel = varargin{2};
             elseif length(varargin) == 4
                 this.Boundary = varargin{1};

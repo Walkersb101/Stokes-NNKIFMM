@@ -16,8 +16,13 @@ function [B,BT,A] = genMatrixComponets(swimmers)
 Nearest = swimmers.Tree.arguments.nearest;
 [points,finePoints,NN] = swimmers.getSwimmers();
 
-N = size(points,1);
+Nsw = size(points,1);
 points = reshape(points.',[],1);
+
+bndPoints = swimmers.getBnd();
+NBnd = size(bndPoints,1);
+
+N = Nsw+NBnd;
 
 noSwimmers = swimmers.swimmerNo();
 swSizes = swimmers.getSwimmerSizes();
@@ -26,7 +31,7 @@ for i = 2:noSwimmers+1
     swIndex(i) = swIndex(i-1) + swSizes(i-1);
 end
 
-au = zeros(sum(swSizes),noSwimmers);
+au = zeros(N,noSwimmers);
 for n = 1 : noSwimmers
     au(swIndex(n):swIndex(n+1)-1,n) = -ones(swIndex(n+1)-swIndex(n),1);
 end
@@ -62,7 +67,7 @@ if Nearest
     x2m = zeros(noSwimmers,N);
     x3m = zeros(noSwimmers,N);
     pointMap = finePoints'*NN;
-    x1 = pointMap(1:N);x2 = pointMap(N+1:2*N);x3 = pointMap(2*N+1:end);
+    x1 = pointMap(1:Nsw);x2 = pointMap(Nsw+1:2*Nsw);x3 = pointMap(2*Nsw+1:end);
     for n=1:noSwimmers
         x1m(n,swIndex(n):swIndex(n+1)-1)=x1(swIndex(n):swIndex(n+1)-1);
         x2m(n,swIndex(n):swIndex(n+1)-1)=x2(swIndex(n):swIndex(n+1)-1);

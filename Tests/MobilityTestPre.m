@@ -4,16 +4,12 @@ spmd
    gpuDevice(1); 
 end
 
-[X,Y] = triangularLattice(0.4,[5,5],[0,0]);
-X = X - 2.5;
-Y = Y - 2.5;
+[X,Y] = triangularLattice(0.4,[0,0],[5,5]);
 
 spheres = Swimmers();
 initialCon = [];
 for i = 1:numel(X)
-    finePoints = prolateSpheroid(0.15,1,0.08);
-    coarsePoints = finePoints(1:4:end,:);
-    NN = nearestMatrix(coarsePoints, finePoints, 1, 20);
+    finePoints = prolateSpheroid(0.15,1,0.1);
     
     vel = zeros(size(finePoints));
     
@@ -21,6 +17,9 @@ for i = 1:numel(X)
                        vel,[0;0;0],[0;0;0]);
     initialCon = vertcat(initialCon,[X(i), Y(i), 0]',[1;0;0;0;1;0]);
 end
+
+boundary = vertcat(wall([0 0 -1.05],[10 10],3,0.25),wall([0 0 1.05],[10 10],3,0.25));
+spheres.updateBnd(boundary,zeros(size(boundary)));
 
 shearFunc = @(t,x) shearFlow(x,1);
 kernelPar = [1e-2,1];
