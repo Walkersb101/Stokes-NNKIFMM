@@ -26,7 +26,7 @@ GPU = arguments.GPU;
 
 coronaRes = arguments.coronaRes;
 coronaShells = arguments.coronaShells;
-coronaPoints = coronaRes^3 - (coronaRes-2*coronaShells)^3;
+coronaPoints = size(gendownsurf(tree,1,coronaRes,coronaShells),1);
 
 levels = max(tree.nodeLevel);
 

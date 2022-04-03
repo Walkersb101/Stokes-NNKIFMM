@@ -1,8 +1,8 @@
 classdef OcTreeUniform < handle
-    % OCTree Compute OcTree for input points
+    % OCTreeUniform Compute OcTree for input points
     %   Generate OcTree for input points. The root node will be the
     %   smallest cube which encompases all points given. The this will
-    %   adaptivly divide until either the max depth is reaches or all
+    %   Uinformly divide until either the max depth is reaches or all
     %   leaves have less than the maximum capacity. Data is stored
     %   linearly with each row representing a new node. 
     %

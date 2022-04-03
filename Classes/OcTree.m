@@ -13,6 +13,8 @@ classdef OcTree < handle
     %   arguement    : See Optional Arguments below
     %
     % Optional Arguments:
+    %   parThreads   : number of parallel threads for nearest matrix
+    %                  generation
     %   nodeCapacity : sets the maximum capacity of the node(default = 200)
     %   maxDepth     : sets the maximum number of node divsions
     %                  (default = 21)
@@ -352,7 +354,7 @@ classdef OcTree < handle
                     for i = 1:size(nodes,2)
                         children = this.nodeChildren(nodes(i),:);
                         if all(ismember(children,W))
-                            W = [setdiff(W,children) nodes(i)];
+                            W = [setdiff(W,children) ; nodes(i)];
                         end
                     end
                 end

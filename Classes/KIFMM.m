@@ -1,7 +1,7 @@
 classdef KIFMM
     % OCTree Initialsie FMM Method
     %   Generate FMM class to store method parameters, The vector product 
-    %   can be computed though the vectorProduct method which uses the
+    %   can be computed though the computeVel method which uses the
     %   parameter define in the creation of the class
     %
     % Inputs:
@@ -17,24 +17,29 @@ classdef KIFMM
     %   GMRES        : Changes input shape for potentials from (n,3) to 
     %                  (3*n,1) in [x1 y1 z1 x2 y2 z2 ...]' format 
     %                  (0 for normal, 1 for new format)
+    %   format       : Changes GMRES output format to 
+    %                  [x1 ... xN y1 ... yN z1 ... zN]'
     %   coronaRes    : Resolution of coronas (Default=6)
-    %   coronaShells : Depth of corona (Default=2)
+    %   coronaShells : Depth of corona (Default=1)
     %
     % Properties:
     %   tree         : Store Octree structure from OcTree
     %   arguments    : Store compuational arguments, See above
     %
     % Functions:
-    %   computeVel : Compute the vector product using the KIFMM method
+    %   computeVel        : Compute the vector product using the KIFMM 
+    %                       method
+    %   computeVelSparse  : Compute the vector product using the KIFMM 
+    %                       method using a smaller equivilent surface
+    % 
+    %   reducedComputeVel : Compute the vector product using the KIFMM 
+    %                       method where only nodes in the same node can
+    %                       interact
 
     
     properties
         tree;
         arguments;
-    end
-    
-    properties (Access = private)
-
     end
     
     methods
@@ -48,7 +53,8 @@ classdef KIFMM
             addOptional(IP,'blockSize',0.1);
             addOptional(IP,'GMRES',0);
             addOptional(IP,'coronaRes',6);
-            addOptional(IP,'coronaShells',2);
+            addOptional(IP,'coronaShells',1);
+            addOptional(IP,'format',1);
             parse(IP,varargin{:});
             this.arguments = IP.Results;
             this.arguments.kernelPar = kernelPar;
@@ -69,10 +75,19 @@ classdef KIFMM
             %   vel : A (N,3) array of velocities, unless GMRES
             %                option is provided then [x1 y1 z1 x2 y2 z2
             %                ...]'
+            %
+            % If format is 2 then the GMRES structure changes to 
+            % [x1 ... xN y1 ... yN z1 ... zN]'
+            
             
             if this.arguments.GMRES == 1
-                potentials = reshape(potentials,3,[]).';
+                if this.arguments.format == 1
+                    potentials = reshape(potentials,3,[]).';
+                elseif this.arguments.format == 2
+                    potentials = reshape(potentials,[],3);
+                end
             end
+            
             
             uppot = upwardPass(this.tree,potentials,this.arguments);
             vel = downwardPass(this.tree,potentials,uppot,...
@@ -80,7 +95,61 @@ classdef KIFMM
             
             
             if this.arguments.GMRES == 1
-                vel = reshape(vel.',[],1);
+                if this.arguments.format == 1
+                    vel = reshape(vel.',[],1);
+                elseif this.arguments.format == 2
+                    vel = reshape(vel,[],1);
+                end
+            end
+
+        end
+        
+        function vel = computeVelSparse(this, potentials)
+            %computeVelSparse Compute velocity from given potential 
+            % Compute velocity from given potential using the Kernel 
+            % independent fast multipole method using the parameters given
+            % in the creation of the class, apart from the equivilent
+            % potentials is construced of 56 points.
+            % 
+            % Inputs:
+            %   Potentials : A (N,3) array of potentials, unless GMRES
+            %                option is provided then [x1 y1 z1 x2 y2 z2
+            %                ...]'
+            %
+            % Outputs:
+            %   vel : A (N,3) array of velocities, unless GMRES
+            %                option is provided then [x1 y1 z1 x2 y2 z2
+            %                ...]'
+            %
+            % If format is 2 then the GMRES structure changes to 
+            % [x1 ... xN y1 ... yN z1 ... zN]'
+            
+            
+            if this.arguments.GMRES == 1
+                if this.arguments.format == 1
+                    potentials = reshape(potentials,3,[]).';
+                elseif this.arguments.format == 2
+                    potentials = reshape(potentials,[],3);
+                end
+            end
+            
+            store = [this.arguments.coronaRes,this.arguments.coronaShells];
+            this.arguments.coronaRes = 4;
+            this.arguments.corornaShells = 1;
+            
+            uppot = upwardPass(this.tree,potentials,this.arguments);
+            vel = downwardPass(this.tree,potentials,uppot,...
+                              this.arguments);
+                          
+            this.arguments.coronaRes = store(1);
+            this.arguments.corornaShells = store(2);
+            
+            if this.arguments.GMRES == 1
+                if this.arguments.format == 1
+                    vel = reshape(vel.',[],1);
+                elseif this.arguments.format == 2
+                    vel = reshape(vel,[],1);
+                end
             end
 
         end
@@ -103,29 +172,31 @@ classdef KIFMM
             %   vel : A (N,3) array of velocities, unless GMRES
             %                option is provided then [x1 y1 z1 x2 y2 z2
             %                ...]'
+            %
+            % If format is 2 then the GMRES structure changes to 
+            % [x1 ... xN y1 ... yN z1 ... zN]'
+            
             
             if this.arguments.GMRES == 1
-                potentials = reshape(potentials,3,[]).';
+                if this.arguments.format == 1
+                    potentials = reshape(potentials,3,[]).';
+                elseif this.arguments.format == 2
+                    potentials = reshape(potentials,[],3);
+                end
             end
             
             vel = reducedPass(this.tree,potentials,this.arguments,...
                               this.arguments.GPU);
 
             if this.arguments.GMRES == 1
-                vel = reshape(vel.',[],1);
+                if this.arguments.format == 1
+                    vel = reshape(vel.',[],1);
+                elseif this.arguments.format == 2
+                    vel = reshape(vel,[],1);
+                end
             end
             
         end
-        
-        function [pot,flag,relres,iter,resvec] = computePot(this, vel, varargin)
-            
-            GMRES_temp = this.arguments.GMRES;
-            this.arguments.GMRES = 1;
-            [pot,flag,relres,iter,resvec] = gmres(@(x) this.computeVel(x),vel,varargin{:});
-            this.arguments.GMRES = GMRES_temp;
-            
-        end
     end
-    
 end
 

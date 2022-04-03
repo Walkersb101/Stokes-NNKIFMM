@@ -18,17 +18,17 @@ function [vel] = reducedPass(tree,potentials,arguments,GPU)
 kernelPar = arguments.kernelPar;
 blockSize = arguments.blockSize;
 
-potPoints = tree.points(tree.potentials,:);
-targetPoints = tree.points(tree.targets,:);
-
 nodes = (1:tree.nodeCount)';
 nodes = nodes(isleaf(tree,nodes,'Target'))';
 
 velpar = cell(numel(nodes),1);
-vel = zeros(size(targetPoints));
+vel = zeros(sum(tree.targets),3);
 
 parfor (i = 1:numel(nodes), arguments.parThreads)
     node = nodes(i);
+    
+    potPoints = tree.points(tree.potentials,:);
+    targetPoints = tree.points(tree.targets,:);
     
     nodeSlice = tree.pointIndex(tree.targets) == node;
     leafpoints = targetPoints(nodeSlice,:);
@@ -36,24 +36,14 @@ parfor (i = 1:numel(nodes), arguments.parThreads)
     u = tree.interactions{node,1};
     
     if tree.arguments.nearest
-        
-        NN = sparse(0,0);
-        usurf = zeros(0,3);
-        upot = zeros(0,3);
-        for ui = 1:size(u,2)
-            unode = u(ui);
 
-            uislice = tree.pointIndex == unode;
+        upot = potentials(nodeSlice,:);
 
-            upot = vertcat(upot,potentials(uislice,:));
+        NNi = tree.NN(:,nodeSlice);
+        NNslice = any(NNi,2);
+        NN = NNi(NNslice',:);
 
-            NNi = tree.NN(:,uislice);
-            NNslice = any(NNi,2);
-            NN = blkdiag(NN,NNi(NNslice',:));
-
-            usurf = vertcat(usurf,tree.finePoints(NNslice',:));
-
-        end
+        usurf = tree.finePoints(NNslice',:);
 
         leafpoints = reshape(leafpoints',[],1);
         NN = kron(NN,speye(3));
@@ -65,32 +55,8 @@ parfor (i = 1:numel(nodes), arguments.parThreads)
                         kernelPar,GPU);
     else
 
-        usurf = zeros(tree.nodeCapacity*size(u,2),3);
-        upot = zeros(tree.nodeCapacity*size(u,2),3);
-        uindex = zeros(tree.nodeCapacity*size(u,2),1);
-        for ui = 1:size(u,2)
-            unode = u(ui);
-
-            uislice = tree.pointIndex(tree.potentials) == unode;
-
-            uipoints = potPoints(uislice,:);
-            uipointpot = potentials(uislice,:);
-
-            points = size(uipoints,1);
-
-            usurf(((ui-1)*tree.nodeCapacity)+1:...
-                  ((ui-1)*tree.nodeCapacity)+points,:) = ...
-                  uipoints;
-            upot(((ui-1)*tree.nodeCapacity)+1:...
-                 ((ui-1)*tree.nodeCapacity)+points,:) = ...
-                 uipointpot;
-            uindex(((ui-1)*tree.nodeCapacity)+1:...
-                 ((ui-1)*tree.nodeCapacity)+points,:) = ...
-                 1;
-
-        end
-        usurf(~uindex,:) = [];
-        upot(~uindex,:) = [];
+        usurf = potPoints(nodeSlice,:);
+        upot = potentials(nodeSlice,:);
         
         leafpoints = reshape(leafpoints',[],1);
         usurf = reshape(usurf',[],1);

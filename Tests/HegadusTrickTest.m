@@ -2,9 +2,9 @@
 % parpool(4);
 
 % uncomment if using GPU
-% spmd
-%    gpuDevice(1); 
-% end
+spmd
+   gpuDevice(1); 
+end
 
 clear all;
 
@@ -15,7 +15,7 @@ folder = fileparts(which(mfilename));
 addpath(genpath(folder))
 
 % Generate Points on sphere in using cubic discretisation
-points = sphere(1,[0 0 0],40);
+points = rand(34000,3);
 fprintf("number of scalar DOF=%d\n",numel(points));
 
 % generate velocity at each point
@@ -24,29 +24,38 @@ vel = reshape(vel.',[],1); %reshape into correct format
 
 % Generate adaptive Octree structure
 % nodeCapacity = number of points in node
-tree = OcTree(points,points,'nodeCapacity',2000);
+tree = OcTree(points,points,'nodeCapacity',150);
 
 % Generate FMM handles 
 % First input is tree structure, then [epsilon, mu]
 % Set 'GPU' = 1 for gpu Compute, ParThreads = number of parallel threads, I
 % recomend 4-6 for GPU depending on the tree size
-fmmInitial = KIFMM(tree,[1e-5,1],'GPU',0,'parThreads',20,'GMRES',1);
-fmmActual = KIFMM(tree,[1e-2,1],'GPU',0,'parThreads',20,'GMRES',1);
+fmmInitial = KIFMM(tree,[1e-5,1],'GPU',1,'parThreads',4,'GMRES',1);
+fmmActual = KIFMM(tree,[1e-2,1],'GPU',1,'parThreads',4,'GMRES',1);
 
 tree = []; points =[]; % clear tree and points as now stored in KIFMM
 
-% Direct to actual Epsilon Solution
-[pot1,~,~,iter1] = gmres(@fmmActual.computeVel,vel,[],1e-6,50);
+% tic
+% fmmActual.computeVel(vel);
+% toc
+% 
+% % Direct to actual Epsilon Solution
+% tic
+% x = gmres(@fmmActual.computeVel,vel,[],1e-4,100);
+% toc
+tic
+x = gmres(@fmmActual.computeVel,vel,[],1e-4,100,@(x) resPreCon(x,fmmActual));
+toc
 
-% Compute Inital guess
-[pot21,~,~,iter21] = gmres(@fmmInitial.computeVel,vel,[],1e-6,50);
-
-% Hegedus Trick
-Ax0 = fmmActual.computeVel(pot21); % Compute vector matrix product
-scale = ((vel.')*Ax0)/(norm(Ax0)^2);
-
-% use Inital Guess
-[pot2,~,~,iter22] = gmres(@fmmActual.computeVel,vel,[],1e-6,50,[],[],scale*pot21);
+% % Compute Inital guess
+% [pot21,~,~,iter21] = gmres(@fmmInitial.computeVel,vel,[],1e-6,50);
+% 
+% % Hegedus Trick
+% Ax0 = fmmActual.computeVel(pot21); % Compute vector matrix product
+% scale = ((vel.')*Ax0)/(norm(Ax0)^2);
+% 
+% % use Inital Guess
+% [pot2,~,~,iter22] = gmres(@fmmActual.computeVel,vel,[],1e-6,50,[],[],scale*pot21);
 
 
 % Calculate error

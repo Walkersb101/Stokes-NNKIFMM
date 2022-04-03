@@ -1,7 +1,8 @@
-data = readmatrix("data.csv");
+data = readmatrix("MobilityTestPre.csv");
 
-F(57) = struct('cdata',[],'colormap',[]);
-for j=1:57
+F(31) = struct('cdata',[],'colormap',[]);
+for j=1:31
+    set(gcf,'position',[0,0,600,600])
     clf;
     ax = axes();
     view(ax, 3);
@@ -24,4 +25,4 @@ for j=1:57
     F(j) = getframe(gcf);
 end
 fig = figure;
-movie(fig,F,2)
+movie(fig,F,10)

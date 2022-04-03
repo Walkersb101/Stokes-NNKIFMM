@@ -1,5 +1,18 @@
 function [NN] = nearestMatrix(coarse,fine,blockSize,threads)
 
+%nearestMatrix Compute the nearest neighbour interpolation matrix
+%   Calcuated the nearest neighbour interpolation matrix between the coarse
+%   and fine discretisation in parallel and maximum block size
+% Inputs:
+%   coarse    : A (3*N,1) vector of sample points where we want to compute 
+%               the velocity formated as [x1 y1 z1 x2 y2 z2 ...]'
+%   fine      : A (3*Q,1) vector of fine qudarature points formated as 
+%               [x1 y1 z1 x2 y2 z2 ...]'
+%   blockSize : Maximum size of block compuataion in GB
+%   threads   : number of parallel computation threads
+%
+% Outputs:
+%   NN : A (Q,N) sparse matrix for nearest neighbour interpolation
 
 coarse = reshape(coarse.',[],1);
 fine = reshape(fine.',[],1);
