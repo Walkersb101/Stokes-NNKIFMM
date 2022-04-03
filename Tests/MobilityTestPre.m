@@ -4,7 +4,7 @@ spmd
    gpuDevice(1); 
 end
 
-[X,Y] = TriangularLattice(0.4,[5,5]);
+[X,Y] = triangularLattice(0.4,[5,5],[0,0]);
 X = X - 2.5;
 Y = Y - 2.5;
 
@@ -27,7 +27,7 @@ kernelPar = [1e-2,1];
 treePar = {'nodeCapacity', 500, 'nearest', 0};
 
 mobilityProb = @(t,x) mobilityProblem(spheres, shearFunc,t,x,...
-                                      kernelPar,treePar,6,1,1e-4,50,...
+                                      kernelPar,treePar,4,1,1e-4,50,...
                                       [1e-6,100]);
 
 Totaltime = tic;
