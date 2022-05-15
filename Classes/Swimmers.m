@@ -31,7 +31,7 @@ classdef Swimmers < handle
     %   getIndSwimmer   : Get data from individual swimmer
     %   swimmerNo       : Returns number of swimmers
     %   getBnd          : Get data about Boundary
-    %   getSwimmersBnd  : Get data from swimmers and boundary
+    %   getSwimmerBnd   : Get data from swimmers and boundary
     %   getVelocities   : Extract velocities from swimmers and boundaries
     %   getSwimmerSizes : Return number of points for each swimmer
     %   getForceMoment  : Extract total force and moment on each body
@@ -147,7 +147,7 @@ classdef Swimmers < handle
             end
         end
         
-        function [points, finePoints, NN, pointsrot] = getSwimmers(this)
+        function [points, finePoints, NN, pointsrot,finerot] = getSwimmers(this)
             %getSwimmers Get data from swimmers
             %   Join data from all swimmers into a single arrays which can
             %   be used for computation. 
@@ -159,6 +159,7 @@ classdef Swimmers < handle
             %   NN         : Joined NEAREST Neighbour matrix. 
             %                Empty array is returned if non-NEAREST
             %   pointsrot  : Rotated force points. NON TRANSLATED.
+            %   finerot    : Rotated fine quadrature points. NON TRANSLATED
             
             points = vertcat(this.Geometries{:});
             finePoints = vertcat(this.GeometriesFine{:});
@@ -173,6 +174,8 @@ classdef Swimmers < handle
                 swIndexFine(i) = swIndexFine(i-1) + swSizesFine(i-1);
             end
             
+            pointsrot = zeros(size(points));
+			finerot = zeros(size(finePoints));
             for i = 1:noSwimmers
                 b1=this.b{i,1};
                 b2=this.b{i,2};
@@ -186,11 +189,11 @@ classdef Swimmers < handle
                     this.x0{i}.*ones(swSizes(i),1);
                 
                 if ~isempty(finePoints)
-                    finePoints(swIndexFine(i):swIndexFine(i+1)-1,:) = ...
+                    finerot(swIndexFine(i):swIndexFine(i+1)-1,:) = ...
                         (B * ...
                         finePoints(swIndexFine(i):swIndexFine(i+1)-1,:)')';
                     finePoints(swIndexFine(i):swIndexFine(i+1)-1,:) = ...
-                        finePoints(swIndexFine(i):swIndexFine(i+1)-1,:)+...
+                        finerot(swIndexFine(i):swIndexFine(i+1)-1,:)+...
                         this.x0{i}.*ones(swSizesFine(i),1);
                 end
             end
@@ -249,7 +252,7 @@ classdef Swimmers < handle
         end
         
         function [points, finePoints, NN] = getSwimmerBnd(this)
-            %getSwimmersBnd Get data from swimmers and boundary
+            %getSwimmerBnd Get data from swimmers and boundary
             %   Join data from all swimmers and boundary into a 
             %   single arrays which can be used for computation. 
             %   Swimmers are placed first followed by boundary.
@@ -346,17 +349,6 @@ classdef Swimmers < handle
             
             Force = vertcat(this.F{:});
             Moment = vertcat(this.Moment{:});
-            
-            noSwimmers = this.swimmerNo();
-            for i = 0:noSwimmers-1
-                b1=this.b{i+1,1};
-                b2=this.b{i+1,2};
-                b3=cross(b1,b2);
-                B=[b1(:) b2(:) b3(:)];
-                Force((3*i)+1:(3*i)+3) = (B * Force((3*i)+1:(3*i)+3))';
-                Moment((3*i)+1:(3*i)+3) = (B * Moment((3*i)+1:(3*i)+3))';
-            end
-            
         end
         
         function [swSize,swSizeFine] = getSwimmerSizes(this)
@@ -375,6 +367,21 @@ classdef Swimmers < handle
             
             this.x0{index} = x0;
             this.b(index,:) = {b(1:3),b(4:6)};
+        end
+        
+        function updateSwimmmerRHS(this,index,G,offset)
+            %updateSwimmmer update the centre and basis of each swimmer
+            %
+            % Input :
+            %   x0  : (1,3) array denoting the centre of the array
+            %   b   : (6,1) array denoting the first two basis vectors
+            
+            b1=this.b{index,1};
+            b2=this.b{index,2};
+            b3=cross(b1,b2);
+
+            this.F{index} = G;
+            this.Moment{index} = -4/3*pi*offset*cross(b3,G);
         end
         
         function this = genTree(this,varargin)

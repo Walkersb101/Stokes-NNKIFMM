@@ -1,5 +1,6 @@
-function [out] = mobilityProblem(swimmers,fluidFunc,t,conditions,...,
-    kernalPar,TreePar,threads,GPU,blockSize,tol,maxIter,PreconSettings)
+function [out] = mobilityProblemGravity(swimmers,fluidFunc,t,...,
+    conditions,kernalPar,TreePar,threads,GPU,blockSize,tol,maxIter,...
+    PreconSettings,gravPar)
 %mobilityMatrixMulti Solve the matrix inverse for the mobility problem 
 %
 % Inputs:
@@ -26,6 +27,7 @@ out = zeros(size(conditions));
 for i = 0:(numel(conditions)/9)-1
      data = conditions(i*9+1:(i+1)*9);
      swimmers.updateSwimmmer(i+1,data(1:3)',data(4:9))
+     swimmers.updateSwimmmerRHS(i+1,gravPar(1:3),gravPar(4));
 end
 
 swimmers.genTree(TreePar{:});

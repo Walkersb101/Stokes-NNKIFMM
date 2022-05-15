@@ -24,26 +24,29 @@ nodes = nodes(isleaf(tree,nodes,'Target'))';
 velpar = cell(numel(nodes),1);
 vel = zeros(sum(tree.targets),3);
 
+potPoints = tree.points(tree.potentials,:);
+targetPoints = tree.points(tree.targets,:);
+finePoints = tree.finePoints;
+index = tree.pointIndex(tree.targets);
+NNfull = tree.NN;
+
+NEAREST = tree.arguments.nearest;
+
 parfor (i = 1:numel(nodes), arguments.parThreads)
     node = nodes(i);
     
-    potPoints = tree.points(tree.potentials,:);
-    targetPoints = tree.points(tree.targets,:);
-    
-    nodeSlice = tree.pointIndex(tree.targets) == node;
+    nodeSlice = index == node;
     leafpoints = targetPoints(nodeSlice,:);
-    
-    u = tree.interactions{node,1};
-    
-    if tree.arguments.nearest
-
+        
+    if NEAREST
+        
         upot = potentials(nodeSlice,:);
 
-        NNi = tree.NN(:,nodeSlice);
+        NNi = NNfull(:,nodeSlice);
         NNslice = any(NNi,2);
         NN = NNi(NNslice',:);
 
-        usurf = tree.finePoints(NNslice',:);
+        usurf = finePoints(NNslice',:);
 
         leafpoints = reshape(leafpoints',[],1);
         NN = kron(NN,speye(3));
@@ -74,4 +77,5 @@ for i = 1:numel(nodes)
     nodeslice = tree.pointIndex(tree.targets) == node;
     
     vel(nodeslice,:) = velpar{i};
+end
 end

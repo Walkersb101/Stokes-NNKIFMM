@@ -1,4 +1,4 @@
-function [b] = mobilityPrecon(f,swimmers,B,BT,A,tol,maxIter)
+function [b] = mobilityPrecon(f,swimmers,B,BT,A1,A2,tol,maxIter)
 %mobilityPrecon Preconditioner for Mobility matrix 
 %
 % Inputs:
@@ -24,15 +24,17 @@ N=numel(force)/3;
 b = zeros(3*N+6*noSwimmers,1);
 
 swimmers.FMM.arguments.GMRES = 1;
-[GMRESSol,~,~] = gmres(@(x) swimmers.FMM.reducedComputeVel(x), force,[],...
-                        tol,maxIter);
+% [GMRESSol,~,~] = gmres(@(x) swimmers.FMM.reducedComputeVel(x), force,[],...
+%                         tol,maxIter);
+GMRESSol = swimmers.FMM.reducedSolve(force);
 b(1:end-6*noSwimmers) = GMRESSol;
 
-out = -A*(B*swimmers.FMM.computeVelSparse(BT*(A*UOm)));
+out = -A2\((BT.')*swimmers.FMM.computeVelSparse((B.')*(A1\UOm)));
 
 b(end-6*noSwimmers+1:end) = out;
 
-[GMRESSol,~,~] = gmres(@(x) swimmers.FMM.reducedComputeVel(x), BT*out,...
-                        [],tol,maxIter);
+% [GMRESSol,~,~] = gmres(@(x) swimmers.FMM.reducedComputeVel(x), BT*out,...
+%                         [],tol,maxIter);
+GMRESSol = swimmers.FMM.reducedSolve(BT*out);
 b(1:end-6*noSwimmers) = b(1:end-6*noSwimmers) - GMRESSol;
 end

@@ -108,7 +108,7 @@ classdef OcTree < handle
             this.Divide(1);
             this.DeAllocateSpace;
             
-            this.cullNodes;
+%             this.cullNodes;
             
             this.geninteractionlists;
             

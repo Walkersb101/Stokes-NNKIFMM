@@ -14,18 +14,18 @@ function [points] = wall(centre,scale,axis,h)
 resolution = ceil(scale/h);
 noPoints = prod(resolution);
 if axis == 1
-    y = linspace(centre(2)-scale(1),centre(2)+scale(1),resolution(1));
-    z = linspace(centre(3)-scale(2),centre(3)+scale(2),resolution(2));
+    y = linspace(centre(2)-scale(1)/2,centre(2)+scale(1)/2,resolution(1));
+    z = linspace(centre(3)-scale(2)/2,centre(3)+scale(2)/2,resolution(2));
     [Y,Z] = meshgrid(y,z);
     points = [centre(1)*ones(noPoints,1),Y(:),Z(:)];
 elseif axis == 2
-    x = linspace(centre(1)-scale(1),centre(1)+scale(1),resolution(1));
-    z = linspace(centre(3)-scale(2),centre(3)+scale(2),resolution(2));
+    x = linspace(centre(1)-scale(1)/2,centre(1)+scale(1)/2,resolution(1));
+    z = linspace(centre(3)-scale(2)/2,centre(3)+scale(2)/2,resolution(2));
     [X,Z] = meshgrid(x,z);
     points = [X(:),centre(2)*ones(noPoints,1),Z(:)];
 else 
-    x = linspace(centre(1)-scale(1),centre(1)+scale(1),resolution(1));
-    y = linspace(centre(2)-scale(2),centre(2)+scale(2),resolution(2));
+    x = linspace(centre(1)-scale(1)/2,centre(1)+scale(1)/2,resolution(1));
+    y = linspace(centre(2)-scale(2)/2,centre(2)+scale(2)/2,resolution(2));
     [X,Y] = meshgrid(x,y);
     points = [X(:),Y(:),centre(3)*ones(noPoints,1)];
 end

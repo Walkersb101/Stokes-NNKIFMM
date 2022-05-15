@@ -195,6 +195,49 @@ classdef KIFMM
                     vel = reshape(vel,[],1);
                 end
             end
+        end
+            
+        function pot = reducedSolve(this, vel)
+            %reducedComputeVel Compute velocity from given potential 
+            % Compute velocity from given potential using the Kernel 
+            % independent fast multipole method using the parameters given 
+            % in the creation of the class. The reduced precondrttioing is
+            % used where only the interations between target and potential 
+            % points within the same node (and its children) are computed 
+            % and all far field interactions are ignored.
+            % 
+            % Inputs:
+            %   Potentials : A (N,3) array of potentials, unless GMRES
+            %                option is provided then [x1 y1 z1 x2 y2 z2
+            %                ...]'
+            %
+            % Outputs:
+            %   vel : A (N,3) array of velocities, unless GMRES
+            %                option is provided then [x1 y1 z1 x2 y2 z2
+            %                ...]'
+            %
+            % If format is 2 then the GMRES structure changes to 
+            % [x1 ... xN y1 ... yN z1 ... zN]'
+            
+            
+            if this.arguments.GMRES == 1
+                if this.arguments.format == 1
+                    vel = reshape(vel,3,[]).';
+                elseif this.arguments.format == 2
+                    vel = reshape(vel,[],3);
+                end
+            end
+            
+            pot = ReducedSolve(this.tree,vel,this.arguments,...
+                this.arguments.GPU);
+
+            if this.arguments.GMRES == 1
+                if this.arguments.format == 1
+                    pot = reshape(pot.',[],1);
+                elseif this.arguments.format == 2
+                    pot = reshape(pot,[],1);
+                end
+            end
             
         end
     end
