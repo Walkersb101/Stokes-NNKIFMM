@@ -10,10 +10,10 @@ This work was done as part of my master of physics at the University of Birmingh
 
 
 # References
-- [^1] Ying, L., Biros, G., & Zorin, D. (2004). A kernel-independent adaptive fast multipole algorithm in two and three dimensions. Journal of Computational Physics, 196(2), 591-626.
-- [^2] R. Cortez and S. J. Sci Comput. “The Method of Regularized Stokeslets”. In: Artic. SIAM J. Sci. Comput. 23.4 (2001), pp. 1204–1225.
-- [^3] Gallagher MT, Smith DJ. Meshfree and efficient modelling of swimming cells. Physical Review Fluids. 2018 May 31;3(5):053101.
-- [^4] Smith DJ. A nearest-neighbour discretisation of the regularized stokeslet boundary integral equation. Journal of Computational Physics. 2018 Apr 1;358:88-102.
-- [^5]  Gallagher M. T. and Smith D. J. 2021 The art of coarse Stokes: Richardson extrapolation improves the accuracy and efficiency of the method of regularized stokesletsR. Soc. Open Sci.8210108
-- [^6] Y. Saad and M. H. Schultz. “GMRES: A Generalized Minimal Residual Algorithm for Solving Nonsymmetric Linear Systems”. In: SIAM J. Sci. Stat.Comput. 7.3 (1986), pp. 856–869.
-- [^7] M. W. Rostami and S. D. Olson. “Fast algorithms for large dense matrices with applications to biofluids”. In: J. Comput. Phys. 394 (Oct. 2019), pp. 364–384.
+[^1]: Ying, L., Biros, G., & Zorin, D. (2004). A kernel-independent adaptive fast multipole algorithm in two and three dimensions. Journal of Computational Physics, 196(2), 591-626.
+[^2]: R. Cortez and S. J. Sci Comput. “The Method of Regularized Stokeslets”. In: Artic. SIAM J. Sci. Comput. 23.4 (2001), pp. 1204–1225.
+[^3]: Gallagher MT, Smith DJ. Meshfree and efficient modelling of swimming cells. Physical Review Fluids. 2018 May 31;3(5):053101.
+[^4]: Smith DJ. A nearest-neighbour discretisation of the regularized stokeslet boundary integral equation. Journal of Computational Physics. 2018 Apr 1;358:88-102.
+[^5]: Gallagher M. T. and Smith D. J. 2021 The art of coarse Stokes: Richardson extrapolation improves the accuracy and efficiency of the method of regularized stokesletsR. Soc. Open Sci.8210108
+[^6]: Y. Saad and M. H. Schultz. “GMRES: A Generalized Minimal Residual Algorithm for Solving Nonsymmetric Linear Systems”. In: SIAM J. Sci. Stat.Comput. 7.3 (1986), pp. 856–869.
+[^7]: M. W. Rostami and S. D. Olson. “Fast algorithms for large dense matrices with applications to biofluids”. In: J. Comput. Phys. 394 (Oct. 2019), pp. 364–384.
