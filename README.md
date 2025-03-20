@@ -1,7 +1,6 @@
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-
 # Stokes-NNKIFMM
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 Stokes-NNKIFMM is an adaptive particle kernel-independent FMM Code based on [^1] for the fast computation of Regulasied Stokeslet dynamics [^2]. 
 The Code employs the nearest neighbour mapping (detailed in [^3][^4]) and Richardson extrapolation (detailed in [^5]) to quickly evaluate the Mobility equations for microscale biological fluid dynamics.
@@ -9,7 +8,7 @@ Mobility equations are solved using GMRES [^6] using a preconditioner inspired b
 This work was done as part of my master of physics at the University of Birmingham supervised by David Smith and supported by Meurig Gallagher. This work has not been published but my Dissertation can be found [Here](https://www.github.com/Walkersb101/Dissertation)
 
 
-# References
+## References
 [^1]: Ying, L., Biros, G., & Zorin, D. (2004). A kernel-independent adaptive fast multipole algorithm in two and three dimensions. Journal of Computational Physics, 196(2), 591-626.
 [^2]: R. Cortez and S. J. Sci Comput. “The Method of Regularized Stokeslets”. In: Artic. SIAM J. Sci. Comput. 23.4 (2001), pp. 1204–1225.
 [^3]: Gallagher MT, Smith DJ. Meshfree and efficient modelling of swimming cells. Physical Review Fluids. 2018 May 31;3(5):053101.
