@@ -7,6 +7,9 @@ The Code employs the nearest neighbour mapping (detailed in [^3][^4]) and Richar
 Mobility equations are solved using GMRES [^6] using a preconditioner inspired by [^7].
 This work was done as part of my master of physics at the University of Birmingham supervised by David Smith and supported by Meurig Gallagher. This work has not been published but my Dissertation can be found [Here](https://www.github.com/Walkersb101/Dissertation)
 
+## How to Use
+The Code supports Serial, multi-threading and GPU (including multiple GPUs) on a single node. 
+Test cases can be found in the [Tests](Tests) folder, The scripts used to generate data used in the figures in my Dissertation can be found in the [Data Generation](Data%20Generation) folder and the code used to plot this data can be found in the [Figure Plotting](Figure%20Plotting) folder.
 
 ## References
 [^1]: Ying, L., Biros, G., & Zorin, D. (2004). A kernel-independent adaptive fast multipole algorithm in two and three dimensions. Journal of Computational Physics, 196(2), 591-626.
